@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verdance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#efe5cf; --paper-2:#e6d9bc; --ink:#2f2a22; --ink-soft:#6b604f; --line:#cdbb94;
+  --board:#d6c39a; --board-edge:#b9a275; --cell:#f3e9cf; --cell-edge:#d9c69c;
+  --accent:#2f6f62; --accent-2:#d9822b; --cube:#e08a2e;
+  --blue:#3d8cbf; --gray:#8b9097; --brown:#8a5a3a; --green:#5e9c42; --yellow:#e5b53a; --red:#c64a3a;
+  --card:#fbf6ea; --shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 6px 18px rgba(70,52,20,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:Figtree,system-ui,sans-serif; color:var(--ink); background:var(--paper);
+  background-image:radial-gradient(ellipse at 20% 0%, #f6efdd 0, transparent 55%),radial-gradient(ellipse at 100% 100%, #e3d4b2 0, transparent 60%);
+  min-height:100vh;
+}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;margin:0;letter-spacing:-.01em}
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:999px;padding:.6rem 1.1rem;background:var(--accent);color:#fff;font-weight:600;box-shadow:0 2px 0 #1f4d44}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.warm{background:var(--accent-2);box-shadow:0 2px 0 #9c5a17}
+.btn.small{padding:.35rem .75rem;font-size:.85rem}
+
+/* ---------- Top bar ---------- */
+.top{display:flex;align-items:center;gap:1.2rem;padding:.8rem 1.4rem;border-bottom:1px solid var(--line);background:rgba(251,246,234,.6);backdrop-filter:blur(4px);position:sticky;top:0;z-index:20}
+.brand{font-family:Fraunces,serif;font-weight:800;font-size:1.55rem;color:var(--accent);letter-spacing:-.02em}
+.players{display:flex;gap:.5rem;flex:1;flex-wrap:wrap}
+.pchip{display:flex;align-items:center;gap:.55rem;padding:.35rem .8rem .35rem .4rem;border-radius:999px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+.pchip.on{box-shadow:inset 0 0 0 2px var(--accent);background:#fff}
+.pchip .dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:.8rem}
+.pchip b{font-family:Fraunces,serif;font-size:1.1rem}
+.pchip small{color:var(--ink-soft)}
+.meta{display:flex;gap:1rem;align-items:center;color:var(--ink-soft);font-size:.9rem}
+.meta strong{color:var(--ink)}
+
+/* ---------- Layout ---------- */
+.layout{display:grid;grid-template-columns:400px minmax(0,1fr) 300px;gap:1.2rem;padding:1.2rem 1.4rem 2rem;max-width:1700px;margin:0 auto}
+.panel{background:rgba(251,246,234,.75);border-radius:18px;box-shadow:var(--shadow);padding:1rem 1.1rem}
+.panel h2{font-size:1.1rem;margin-bottom:.7rem;display:flex;justify-content:space-between;align-items:baseline}
+.panel h2 small{font-family:Figtree;font-weight:500;color:var(--ink-soft);font-size:.8rem}
+.stack-col{display:flex;flex-direction:column;gap:1.2rem}
+
+/* Central board */
+.central{display:grid;grid-template-columns:repeat(5,1fr);gap:.45rem}
+.slot{border:0;background:var(--board);border-radius:14px;padding:.45rem .2rem;display:flex;flex-direction:column;align-items:center;gap:.15rem;box-shadow:inset 0 2px 5px rgba(80,55,20,.25);transition:transform .15s}
+.slot.can:hover{transform:translateY(-3px);box-shadow:inset 0 2px 5px rgba(80,55,20,.25),0 0 0 2.5px var(--accent)}
+.slot:disabled{cursor:default}
+.slot.empty{opacity:.45}
+
+/* Hand */
+.hand{display:flex;gap:.6rem;align-items:center;min-height:62px;flex-wrap:wrap}
+.htok{border:0;background:none;padding:0;border-radius:50%;transition:transform .12s}
+.htok.sel{transform:translateY(-5px);filter:drop-shadow(0 0 0 #000) drop-shadow(0 4px 4px rgba(0,0,0,.25))}
+.htok.sel svg{outline:2.5px solid var(--accent);outline-offset:3px;border-radius:50%}
+.hint{color:var(--ink-soft);font-size:.88rem;line-height:1.4}
+.actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+
+/* Cards */
+.market{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem}
+.card{position:relative;background:var(--card);border-radius:12px;padding:.5rem .5rem .55rem;box-shadow:0 1px 0 #fff inset,0 3px 10px rgba(70,52,20,.14);display:flex;flex-direction:column;gap:.3rem;border-left:6px solid var(--band);min-width:0}
+.card .name{font-family:Fraunces,serif;font-weight:700;font-size:.92rem;line-height:1.1}
+.card .pat{display:flex;justify-content:center;align-items:center;height:70px;background:linear-gradient(#f3ead4,#ece0c2);border-radius:8px}
+.track{display:flex;gap:3px;justify-content:center}
+.track span{width:21px;height:21px;border-radius:5px;display:grid;place-items:center;font-size:.72rem;font-weight:700;background:#f0e5cb;color:var(--ink-soft);box-shadow:inset 0 0 0 1px var(--line)}
+.track span.cube{background:linear-gradient(145deg,#f3a54f,#c8701c);color:rgba(255,255,255,.85);box-shadow:0 1px 0 #8e4c10}
+.track span.cur{background:var(--accent);color:#fff;box-shadow:none}
+.card .btn{width:100%;padding:.35rem;font-size:.8rem}
+.card.ready{box-shadow:0 0 0 2.5px var(--accent-2),0 6px 16px rgba(217,130,43,.35)}
+.card.active-sel{box-shadow:0 0 0 3px var(--accent),0 6px 16px rgba(47,111,98,.3)}
+.deck{display:grid;place-items:center;border-radius:12px;background:repeating-linear-gradient(45deg,#3a5e50 0 8px,#355748 8px 16px);color:#e9e1c9;font-family:Fraunces;font-weight:700;font-size:.9rem;min-height:120px;text-align:center}
+
+/* Player board */
+.boardwrap{display:flex;flex-direction:column;align-items:center;gap:.8rem}
+.boardhead{display:flex;width:100%;justify-content:space-between;align-items:center}
+.boardhead h2{font-size:1.5rem}
+.boardsvg{width:100%;max-width:560px;max-height:calc(100vh - 330px);min-height:320px;height:auto;display:block}
+.cell{cursor:default}
+.cell.legal{cursor:pointer}
+.cell.legal .hexbg{fill:#fff8e3;stroke:var(--accent);stroke-width:3}
+.cell.legal:hover .hexbg{fill:#e8f2e6}
+.cell.target{cursor:pointer}
+.cell.target .hexbg{stroke:var(--accent-2);stroke-width:4;fill:#fdeed7}
+.cell.target:hover .hexbg{fill:#f8d9a8}
+.mycards{display:grid;grid-template-columns:repeat(4,minmax(0,150px));gap:.6rem;justify-content:center;width:100%}
+.slotempty{border:1.5px dashed var(--line);border-radius:12px;min-height:150px;display:grid;place-items:center;color:var(--ink-soft);font-size:.8rem;text-align:center;padding:.5rem}
+.done{display:flex;flex-wrap:wrap;gap:.35rem;justify-content:center}
+.done span{font-size:.78rem;background:var(--card);border-radius:999px;padding:.2rem .6rem;box-shadow:inset 0 0 0 1px var(--line)}
+.done span b{color:var(--accent)}
+
+/* Scores */
+.scoregrid{display:grid;grid-template-columns:1fr auto;gap:.25rem .8rem;font-size:.9rem}
+.scoregrid div:nth-child(even){text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.scoregrid .tot{border-top:1px solid var(--line);padding-top:.35rem;font-family:Fraunces;font-size:1.1rem}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:.4rem;vertical-align:middle}
+
+/* Opponents */
+.opp{display:flex;flex-direction:column;gap:.4rem}
+.opp h3{font-size:1rem;display:flex;justify-content:space-between}
+.oppcards{display:flex;flex-wrap:wrap;gap:.3rem}
+.oppcards span{font-size:.75rem;padding:.15rem .5rem;border-radius:6px;background:var(--card);border-left:4px solid var(--band)}
+
+/* Overlay */
+.overlay{position:fixed;inset:0;background:rgba(47,42,34,.45);display:grid;place-items:center;z-index:50;padding:16px;backdrop-filter:blur(3px)}
+.modal{background:var(--paper);border-radius:22px;padding:2rem;max-width:560px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.3);max-height:90vh;overflow:auto}
+.modal h1{font-size:2.6rem;color:var(--accent);font-weight:800}
+.modal p{color:var(--ink-soft);line-height:1.5}
+.field{display:flex;gap:.5rem;margin:.4rem 0}
+.field input{flex:1;padding:.6rem .8rem;border-radius:10px;border:1.5px solid var(--line);background:#fffaf0;font:inherit}
+.rules h3{font-size:1.05rem;margin:1rem 0 .3rem}
+.rules ul{margin:.2rem 0;padding-left:1.1rem;line-height:1.55;color:var(--ink)}
+table.final{width:100%;border-collapse:collapse;margin:1rem 0;font-variant-numeric:tabular-nums}
+table.final th,table.final td{padding:.4rem .5rem;text-align:right;border-bottom:1px solid var(--line)}
+table.final th:first-child,table.final td:first-child{text-align:left}
+table.final tr.total td{font-family:Fraunces;font-weight:800;font-size:1.2rem;border-bottom:0}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#f6efdd;padding:.65rem 1.1rem;border-radius:12px;z-index:60;font-size:.92rem;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+
+@media (max-width:1250px){.layout{grid-template-columns:360px minmax(0,1fr)}.right{grid-column:1/-1}}
+@media (max-width:820px){.layout{grid-template-columns:1fr;padding:1rem 16px}.top{flex-wrap:wrap;padding:.6rem 16px}.mycards{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="g-blue" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#7fc0e6"/><stop offset=".6" stop-color="#3d8cbf"/><stop offset="1" stop-color="#2a6a95"/></radialGradient>
+    <radialGradient id="g-gray" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#c3c7cc"/><stop offset=".6" stop-color="#8b9097"/><stop offset="1" stop-color="#666b72"/></radialGradient>
+    <radialGradient id="g-brown" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#b98560"/><stop offset=".6" stop-color="#8a5a3a"/><stop offset="1" stop-color="#683f25"/></radialGradient>
+    <radialGradient id="g-green" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#a3d27c"/><stop offset=".6" stop-color="#5e9c42"/><stop offset="1" stop-color="#43772d"/></radialGradient>
+    <radialGradient id="g-yellow" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fbe08a"/><stop offset=".6" stop-color="#e5b53a"/><stop offset="1" stop-color="#c39220"/></radialGradient>
+    <radialGradient id="g-red" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ea8878"/><stop offset=".6" stop-color="#c64a3a"/><stop offset="1" stop-color="#9a3427"/></radialGradient>
+    <linearGradient id="g-board" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ddcba3"/><stop offset="1" stop-color="#c9b385"/></linearGradient>
+  </defs>
+</svg>
+<div id="app"></div>
+<script>
+'use strict';
+/* ================= Données ================= */
+const COLORS = ['blue','gray','brown','green','yellow','red'];
+const COLOR_FR = {blue:'eau',gray:'montagne',brown:'tronc',green:'feuillage',yellow:'champ',red:'bâtiment'};
+const BAG_COUNTS = {blue:23,gray:23,brown:21,green:19,yellow:19,red:15};
+const EDGE = {blue:'#255f86',gray:'#5b6066',brown:'#5a361f',green:'#3b6a27',yellow:'#ad811a',red:'#88291e'};
+const PLAYER_COLORS = ['#2f6f62','#c0573f','#5b5ea6','#b08a2e'];
+
+// Exigences d'une case de motif
+const REQ = {
+  W:{label:'Eau',color:'blue',stack:['blue']},
+  F:{label:'Champ',color:'yellow',stack:['yellow']},
+  M1:{label:'Montagne 1',color:'gray',stack:['gray']},
+  M2:{label:'Montagne 2',color:'gray',stack:['gray','gray']},
+  M3:{label:'Montagne 3',color:'gray',stack:['gray','gray','gray']},
+  T1:{label:'Buisson',color:'green',stack:['green']},
+  T2:{label:'Arbre 2',color:'green',stack:['brown','green']},
+  T3:{label:'Arbre 3',color:'green',stack:['brown','brown','green']},
+  B:{label:'Bâtiment',color:'red',stack:['brown','red']},
+};
+// Directions axiales (hexagones à sommet plat)
+const DIRS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+// 32 cartes Animal. La 1re case porte le cube. Points croissants : n cubes posés = n-ième valeur.
+const CARDS = [
+  ['Fennec',[3,7,12],[['F',0,0],['M1',1,0]]],
+  ['Lapin',[2,5,9,14],[['F',0,0],['F',0,-1]]],
+  ['Abeille',[4,9,15],[['F',0,0],['T1',1,0],['T1',-1,1]]],
+  ['Perdrix',[5,11],[['F',0,0],['B',0,-1],['W',0,1]]],
+  ['Hamster',[3,7,12],[['F',0,0],['B',1,-1]]],
+  ['Alouette',[4,9],[['F',0,0],['F',0,1],['F',0,2]]],
+  ['Coccinelle',[3,8,13],[['F',0,0],['T2',1,0]]],
+  ['Loutre',[3,7,12],[['W',0,0],['W',1,0],['T1',0,-1]]],
+  ['Héron',[5,11],[['W',0,0],['F',0,1],['F',0,-1]]],
+  ['Grenouille',[2,5,9,14],[['W',0,0],['T1',1,0]]],
+  ['Castor',[4,9,15],[['W',0,0],['T2',1,-1],['W',0,1]]],
+  ['Martin-pêcheur',[5,12],[['W',0,0],['T3',0,-1]]],
+  ['Canard',[3,7,12],[['W',0,0],['F',1,0]]],
+  ['Flamant',[4,9,15],[['W',0,0],['W',1,0],['W',0,1]]],
+  ['Bouquetin',[4,10,17],[['M2',0,0],['M1',1,0]]],
+  ['Aigle',[6,14],[['M3',0,0],['M2',0,1]]],
+  ['Marmotte',[3,7,12],[['M1',0,0],['F',1,0]]],
+  ['Chamois',[5,11],[['M2',0,0],['M2',1,-1]]],
+  ['Chauve-souris',[4,9,15],[['M2',0,0],['B',1,0]]],
+  ['Ours',[5,11,18],[['M2',0,0],['T3',1,0]]],
+  ['Écureuil',[3,7,12],[['T2',0,0],['T2',1,0]]],
+  ['Chouette',[5,12],[['T3',0,0],['B',0,1]]],
+  ['Cerf',[4,9,15],[['T2',0,0],['F',0,1],['F',1,0]]],
+  ['Hérisson',[2,5,9,14],[['T1',0,0],['F',1,0]]],
+  ['Pic-vert',[6,14],[['T3',0,0],['T3',1,-1]]],
+  ['Sanglier',[3,8,13],[['T2',0,0],['M1',1,0]]],
+  ['Loup',[5,11,18],[['T3',0,0],['M2',0,1],['T2',0,-1]]],
+  ['Souris',[4,9,15],[['B',0,0],['F',0,-1],['F',0,1]]],
+  ['Renard',[3,7,12],[['B',0,0],['T1',1,0]]],
+  ['Hirondelle',[4,9,15],[['B',0,0],['B',1,0]]],
+  ['Raton laveur',[4,10],[['B',0,0],['W',0,1],['T2',0,-1]]],
+  ['Cigogne',[5,11],[['B',0,0],['W',1,0],['W',1,-1]]],
+].map(([name,pts,cells],id)=>({id,name,pts,cells}));
+
+// Plateau face A : 23 cases, 5 colonnes de 5/4/5/4/5 (colonnes impaires décalées vers le bas)
+const BOARD_CELLS = (()=>{const out=[];for(let c=0;c<5;c++){const n=c%2?4:5;for(let r=0;r<n;r++){out.push({col:c,row:r,q:c,r:r-(c-(c&1))/2});}}return out;})();
+const key=(q,r)=>q+','+r;
+const CELL_BY_KEY = Object.fromEntries(BOARD_CELLS.map(c=>[key(c.q,c.r),c]));
+const neighbors=(q,r)=>DIRS.map(([dq,dr])=>key(q+dq,r+dr)).filter(k=>CELL_BY_KEY[k]);
+
+/* ================= État ================= */
+let S = null;          // état de partie
+let UI = {sel:0, cubeCard:null, overlay:null, toast:null, help:false};
+let history = [];      // instantanés du tour en cours (annuler)
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+function newGame(names){
+  const bag=[];for(const c of COLORS)for(let i=0;i<BAG_COUNTS[c];i++)bag.push(c);shuffle(bag);
+  const deck=shuffle(CARDS.map(c=>c.id));
+  S={
+    players:names.map((name,i)=>({name,color:PLAYER_COLORS[i],board:Object.fromEntries(BOARD_CELLS.map(c=>[key(c.q,c.r),{stack:[],cube:null}])),cards:[],done:[],turns:0})),
+    current:0, bag, deck, market:deck.splice(0,5),
+    slots:Array.from({length:5},()=>bag.splice(0,3)),
+    hand:[], tookSlot:false, tookCard:false, endTriggered:false, over:false,
+  };
+  history=[];UI.sel=0;UI.cubeCard=null;
+  UI.overlay={type:'turn'};
+  save();render();
+}
+function save(){try{localStorage.setItem('verdance-save',JSON.stringify({S,history}));}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem('verdance-save')||'null');if(d&&d.S&&!d.S.over){return d;}}catch(e){}return null;}
+function snapshot(){history.push(clone(S));}
+function undo(){if(!history.length)return;S=history.pop();UI.cubeCard=null;UI.sel=0;save();render();}
+
+const me=()=>S.players[S.current];
+
+/* ================= Règles ================= */
+function canPlace(cell,color){
+  if(cell.cube)return false;
+  const s=cell.stack,h=s.length,top=s[h-1];
+  if(h===0)return true;
+  if(color==='gray')return h<3&&s.every(t=>t==='gray');
+  if(color==='brown')return h===1&&top==='brown';
+  if(color==='green')return (h===1||h===2)&&s.every(t=>t==='brown');
+  if(color==='red')return h===1&&(top==='brown'||top==='gray'||top==='red');
+  return false;
+}
+function matches(cell,req){
+  const s=cell.stack;
+  if(req==='B')return s.length===2&&s[1]==='red';
+  const want=REQ[req].stack;
+  return s.length===want.length&&s.every((t,i)=>t===want[i]);
+}
+const rot=([q,r])=>[-r,q+r];
+function cardTargets(board,cardId){
+  const card=CARDS[cardId];const targets=new Set();
+  let cells=card.cells.map(([req,q,r])=>({req,q,r}));
+  for(let k=0;k<6;k++){
+    for(const anchor of BOARD_CELLS){
+      const t=board[key(anchor.q,anchor.r)];
+      if(t.cube)continue;
+      let ok=true;
+      for(const c of cells){const cell=board[key(anchor.q+c.q,anchor.r+c.r)];if(!cell||!matches(cell,c.req)){ok=false;break;}}
+      if(ok)targets.add(key(anchor.q,anchor.r));
+    }
+    cells=cells.map(c=>{const [q,r]=rot([c.q,c.r]);return{req:c.req,q,r};});
+  }
+  return [...targets];
+}
+
+const RIVER=[0,0,2,5,8,11,15];
+function score(p){
+  const b=p.board;const res={trees:0,mountains:0,fields:0,buildings:0,water:0,animals:0};
+  const top=k=>{const s=b[k].stack;return s[s.length-1];};
+  const isMountain=k=>b[k].stack.length>0&&b[k].stack.every(t=>t==='gray');
+  for(const c of BOARD_CELLS){
+    const k=key(c.q,c.r),s=b[k].stack,h=s.length;if(!h)continue;
+    if(s[h-1]==='green')res.trees+=[0,1,3,7][h];
+    if(isMountain(k)&&neighbors(c.q,c.r).some(isMountain))res.mountains+=[0,1,3,7][h];
+    if(h===2&&s[1]==='red'){const cols=new Set(neighbors(c.q,c.r).map(top).filter(Boolean));if(cols.size>=3)res.buildings+=5;}
+  }
+  // champs
+  const comps=color=>{const seen=new Set(),out=[];for(const c of BOARD_CELLS){const k=key(c.q,c.r);if(seen.has(k)||!(b[k].stack.length===1&&b[k].stack[0]===color))continue;const comp=[];const st=[k];seen.add(k);while(st.length){const x=st.pop();comp.push(x);const cc=CELL_BY_KEY[x];for(const n of neighbors(cc.q,cc.r)){if(!seen.has(n)&&b[n].stack.length===1&&b[n].stack[0]===color){seen.add(n);st.push(n);}}}out.push(comp);}return out;};
+  res.fields=comps('yellow').filter(c=>c.length>=2).length*5;
+  // rivière la plus longue (plus court chemin entre extrémités)
+  let best=0;
+  for(const comp of comps('blue')){const set=new Set(comp);for(const start of comp){const dist={[start]:1};const q=[start];while(q.length){const x=q.shift();const cc=CELL_BY_KEY[x];for(const n of neighbors(cc.q,cc.r))if(set.has(n)&&!dist[n]){dist[n]=dist[x]+1;q.push(n);}}best=Math.max(best,...Object.values(dist));}}
+  res.water=best<=6?RIVER[best]:15+4*(best-6);
+  for(const c of [...p.cards,...p.done])if(c.placed>0)res.animals+=CARDS[c.id].pts[c.placed-1];
+  res.landscape=res.trees+res.mountains+res.fields+res.buildings+res.water;
+  res.total=res.landscape+res.animals;
+  return res;
+}
+const cubesPlaced=p=>[...p.cards,...p.done].reduce((a,c)=>a+c.placed,0);
+const emptyCells=p=>Object.values(p.board).filter(c=>!c.stack.length).length;
+
+/* ================= Actions ================= */
+function takeSlot(i){
+  if(S.tookSlot||!S.slots[i].length)return;
+  snapshot();S.hand=S.slots[i];S.slots[i]=[];S.tookSlot=true;UI.sel=0;UI.cubeCard=null;save();render();
+}
+function placeToken(k){
+  const color=S.hand[UI.sel];if(!color)return;const cell=me().board[k];
+  if(!canPlace(cell,color))return;
+  snapshot();cell.stack.push(color);S.hand.splice(UI.sel,1);UI.sel=0;
+  const ready=me().cards.filter(c=>cardTargets(me().board,c.id).length).map(c=>CARDS[c.id].name);
+  if(ready.length)toast('Motif réalisé : '+ready.join(', ')+' — tu peux poser un cube');
+  save();render();
+}
+function takeCard(i){
+  if(S.tookCard||me().cards.length>=4)return;
+  snapshot();const id=S.market.splice(i,1)[0];me().cards.push({id,placed:0});S.tookCard=true;save();render();
+}
+function startCube(i){UI.cubeCard=UI.cubeCard===i?null:i;render();}
+function placeCube(k){
+  const p=me(),ci=UI.cubeCard,c=p.cards[ci];if(!c)return;
+  if(!cardTargets(p.board,c.id).includes(k))return;
+  snapshot();p.board[k].cube=CARDS[c.id].cells[0][0];c.placed++;
+  const card=CARDS[c.id];
+  if(c.placed>=card.pts.length){p.cards.splice(ci,1);p.done.push(c);toast(card.name+' complété ! '+card.pts[card.pts.length-1]+' points');}
+  UI.cubeCard=null;save();render();
+}
+const handStuck=()=>S.hand.length>0&&S.hand.every(c=>!Object.values(me().board).some(x=>canPlace(x,c)));
+function endTurn(){
+  if(!S.tookSlot||(S.hand.length&&!handStuck()))return;
+  S.hand=[];
+  const p=me();p.turns++;
+  // compléter le plateau central
+  for(let i=0;i<5;i++){if(!S.slots[i].length){if(S.bag.length<3){S.slots[i]=S.bag.splice(0);S.endTriggered=true;}else S.slots[i]=S.bag.splice(0,3);}}
+  while(S.market.length<5&&S.deck.length)S.market.push(S.deck.shift());
+  if(emptyCells(p)<=2)S.endTriggered=true;
+  const next=(S.current+1)%S.players.length;
+  if(S.endTriggered&&next===0){S.over=true;UI.overlay={type:'end'};save();render();try{localStorage.removeItem('verdance-save');}catch(e){}return;}
+  S.current=next;S.tookSlot=false;S.tookCard=false;S.hand=[];history=[];UI.cubeCard=null;UI.sel=0;
+  UI.overlay={type:'turn'};save();render();
+}
+let toastTimer;
+function toast(msg){UI.toast=msg;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{UI.toast=null;render();},3200);}
+
+/* ================= Dessin ================= */
+const SQ3=Math.sqrt(3);
+function hexPoints(cx,cy,R){let p=[];for(let i=0;i<6;i++){const a=Math.PI/180*60*i;p.push((cx+R*Math.cos(a)).toFixed(1)+','+(cy+R*Math.sin(a)).toFixed(1));}return p.join(' ');}
+function deco(color,cx,cy,r,isTreeTop){
+  const w='rgba(255,255,255,.55)';
+  switch(color){
+    case 'blue':return `<path d="M${cx-r*.5},${cy-r*.12} q${r*.25},-${r*.22} ${r*.5},0 t${r*.5},0 M${cx-r*.5},${cy+r*.25} q${r*.25},-${r*.22} ${r*.5},0 t${r*.5},0" fill="none" stroke="${w}" stroke-width="${r*.11}" stroke-linecap="round"/>`;
+    case 'gray':return `<path d="M${cx-r*.55},${cy+r*.3} L${cx-r*.12},${cy-r*.35} L${cx+r*.1},${cy-r*.05} L${cx+r*.25},${cy-r*.22} L${cx+r*.58},${cy+r*.3}" fill="none" stroke="${w}" stroke-width="${r*.1}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    case 'brown':return `<circle cx="${cx}" cy="${cy}" r="${r*.45}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="${r*.08}"/><circle cx="${cx}" cy="${cy}" r="${r*.2}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="${r*.08}"/>`;
+    case 'green':return `<circle cx="${cx-r*.28}" cy="${cy-r*.18}" r="${r*.3}" fill="rgba(255,255,255,.2)"/><circle cx="${cx+r*.22}" cy="${cy-r*.28}" r="${r*.22}" fill="rgba(255,255,255,.16)"/><circle cx="${cx+r*.12}" cy="${cy+r*.25}" r="${r*.25}" fill="rgba(0,0,0,.08)"/>`;
+    case 'yellow':{let s='';for(const dx of [-.32,0,.32])s+=`<path d="M${cx+dx*r},${cy+r*.42} L${cx+dx*r},${cy-r*.35} M${cx+dx*r},${cy-r*.1} l-${r*.13},-${r*.13} M${cx+dx*r},${cy-r*.1} l${r*.13},-${r*.13}" stroke="${w}" stroke-width="${r*.08}" stroke-linecap="round" fill="none"/>`;return s;}
+    case 'red':return `<path d="M${cx-r*.42},${cy-r*.02} L${cx},${cy-r*.45} L${cx+r*.42},${cy-r*.02} Z" fill="${w}"/><rect x="${cx-r*.3}" y="${cy-r*.02}" width="${r*.6}" height="${r*.42}" fill="rgba(255,255,255,.4)"/>`;
+  }
+  return '';
+}
+function drawStack(stack,cx,cy,r){
+  let s='';const dy=r*.42;
+  stack.forEach((col,i)=>{
+    const y=cy-i*dy+(stack.length-1)*dy*.5;const last=i===stack.length-1;
+    const rr=col==='green'&&i>0?r*1.08:r;
+    s+=`<ellipse cx="${cx}" cy="${y+r*.2}" rx="${rr}" ry="${rr*.96}" fill="${EDGE[col]}"/>`;
+    s+=`<circle cx="${cx}" cy="${y}" r="${rr}" fill="url(#g-${col})"/>`;
+    if(last)s+=deco(col,cx,y,rr);
+  });
+  return s;
+}
+function drawCube(cx,cy,s){
+  return `<g transform="translate(${cx},${cy})"><path d="M0,${-s} L${s*.9},${-s*.5} L0,0 L${-s*.9},${-s*.5}Z" fill="#f6b261"/><path d="M${-s*.9},${-s*.5} L0,0 L0,${s} L${-s*.9},${s*.5}Z" fill="#d97f22"/><path d="M${s*.9},${-s*.5} L0,0 L0,${s} L${s*.9},${s*.5}Z" fill="#b8641a"/></g>`;
+}
+function tokenSvg(color,size){
+  const r=size/2-3;return `<svg width="${size}" height="${size+4}" viewBox="0 0 ${size} ${size+4}">${drawStack([color],size/2,size/2,r)}</svg>`;
+}
+function boardSvg(p,{interactive=false,R=52}={}){
+  const pad=R*.9;const w=R*1.5*4+2*R+pad*2;const h=SQ3*R*5+pad*2;
+  const pos=c=>[pad+R+R*1.5*c.col,pad+SQ3*R/2+SQ3*R*(c.row+(c.col%2)*.5)];
+  const color=S.hand[UI.sel];
+  let targets=[];if(interactive&&UI.cubeCard!==null&&p.cards[UI.cubeCard])targets=cardTargets(p.board,p.cards[UI.cubeCard].id);
+  let cells='',tokens='';
+  for(const c of BOARD_CELLS){
+    const k=key(c.q,c.r),cell=p.board[k],[x,y]=pos(c);
+    let cls='cell',act='';
+    if(interactive&&UI.cubeCard!==null){if(targets.includes(k)){cls+=' target';act=`data-act="cube" data-k="${k}"`;}}
+    else if(interactive&&color&&canPlace(cell,color)){cls+=' legal';act=`data-act="place" data-k="${k}"`;}
+    cells+=`<g class="${cls}" ${act}><polygon class="hexbg" points="${hexPoints(x,y,R*.96)}" fill="var(--cell)" stroke="var(--cell-edge)" stroke-width="2"/>`;
+    cells+=`<polygon points="${hexPoints(x,y,R*.96)}" fill="transparent"/></g>`;
+    if(cell.stack.length)tokens+=`<g pointer-events="none">${drawStack(cell.stack,x,y,R*.6)}</g>`;
+    if(cell.cube){const top=y-(cell.stack.length-1)*R*.6*.42*.5-R*.12;tokens+=`<g pointer-events="none">${drawCube(x+R*.02,top,R*.24)}</g>`;}
+  }
+  const bw=w-pad*0.6,bh=h-pad*.4;
+  const shape=`M${pad*.3},${pad*.3+20} Q${pad*.3},${pad*.3} ${pad*.3+20},${pad*.3} L${bw-20},${pad*.3} Q${bw},${pad*.3} ${bw},${pad*.3+20} L${bw},${bh*.62} Q${bw},${bh} ${w/2},${bh} Q${pad*.3},${bh} ${pad*.3},${bh*.62} Z`;
+  return `<svg class="boardsvg" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    <path d="${shape}" fill="url(#g-board)" stroke="var(--board-edge)" stroke-width="3"/>
+    <path d="${shape}" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" transform="translate(0,2)"/>
+    ${cells}${tokens}</svg>`;
+}
+function patternSvg(card,R=15){
+  const pts=card.cells.map(([req,q,r])=>({req,x:R*1.5*q,y:SQ3*R*(r+q/2)}));
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);
+  const minx=Math.min(...xs)-R*1.1,maxx=Math.max(...xs)+R*1.1,miny=Math.min(...ys)-R*1.25,maxy=Math.max(...ys)+R*1.05;
+  let s='';
+  pts.forEach((p,i)=>{
+    s+=`<polygon points="${hexPoints(p.x,p.y,R*.95)}" fill="#f8f0dc" stroke="${i===0?'var(--accent-2)':'#d3c194'}" stroke-width="${i===0?2.2:1.2}"/>`;
+    const st=REQ[p.req].stack;s+=drawStack(p.req==='B'?['brown','red']:st,p.x,p.y,R*.58);
+    if(i===0){const top=p.y-(st.length-1)*R*.58*.42*.5-R*.1;s+=drawCube(p.x,top,R*.26);}
+  });
+  return `<svg width="${Math.min(maxx-minx,140)}" height="${Math.min(maxy-miny,76)}" viewBox="${minx} ${miny} ${maxx-minx} ${maxy-miny}">${s}</svg>`;
+}
+function cardHtml(c,{mode,idx,placed=0}={}){
+  const card=CARDS[c.id??c];const band=`var(--${REQ[card.cells[0][0]].color})`;
+  let track=card.pts.map((v,i)=>{const isCube=i>=placed;const cur=i===placed-1;return `<span class="${isCube?'cube':''}${cur?' cur':''}">${v}</span>`;}).join('');
+  let extra='',cls='card';
+  if(mode==='market'){const ok=!S.tookCard&&me().cards.length<4&&!S.over;extra=`<button class="btn small" data-act="take" data-i="${idx}" ${ok?'':'disabled'}>Prendre</button>`;}
+  if(mode==='mine'){const t=cardTargets(me().board,c.id).length;if(t)cls+=' ready';if(UI.cubeCard===idx)cls+=' active-sel';
+    extra=t?`<button class="btn small warm" data-act="cubemode" data-i="${idx}">${UI.cubeCard===idx?'Annuler':'Poser un cube'}</button>`:`<div class="hint" style="text-align:center;font-size:.75rem">Motif pas encore réalisé</div>`;}
+  return `<div class="${cls}" style="--band:${band}" title="${card.cells.map(x=>REQ[x[0]].label).join(' + ')}"><div class="name">${card.name}</div><div class="pat">${patternSvg(card)}</div><div class="track">${track}</div>${extra}</div>`;
+}
+const swatch=c=>`<span class="sw" style="background:var(--${c})"></span>`;
+function scoreHtml(sc){
+  return `<div class="scoregrid">
+  <div>${swatch('green')}Arbres</div><div>${sc.trees}</div>
+  <div>${swatch('gray')}Montagnes</div><div>${sc.mountains}</div>
+  <div>${swatch('yellow')}Champs</div><div>${sc.fields}</div>
+  <div>${swatch('red')}Bâtiments</div><div>${sc.buildings}</div>
+  <div>${swatch('blue')}Rivière</div><div>${sc.water}</div>
+  <div>${'<span class="sw" style="background:var(--cube);border-radius:2px"></span>'}Animaux</div><div>${sc.animals}</div>
+  <div class="tot">Total</div><div class="tot">${sc.total}</div></div>`;
+}
+
+/* ================= Écrans ================= */
+function setupScreen(){
+  const saved=load();
+  return `<div class="overlay" style="background:var(--paper)"><div class="modal" style="box-shadow:var(--shadow)">
+    <h1>Verdance</h1>
+    <p>Construisez un paysage jeton après jeton : forêts, montagnes, rivières, champs et villages. Réalisez les motifs des cartes Animal pour y faire venir la faune.</p>
+    <h3 style="margin-top:1.2rem">Joueurs</h3>
+    <div id="names">${['Marius','Yasmine'].map((n,i)=>`<div class="field"><input value="${n}" maxlength="16" aria-label="Joueur ${i+1}"></div>`).join('')}</div>
+    <div class="actions"><button class="btn ghost small" data-act="addp">+ Ajouter un joueur</button><button class="btn ghost small" data-act="rmp">– Retirer</button></div>
+    <div class="actions" style="margin-top:1.4rem"><button class="btn" data-act="start">Nouvelle partie</button>${saved?'<button class="btn warm" data-act="resume">Reprendre la partie</button>':''}<button class="btn ghost" data-act="help">Règles</button></div>
+  </div></div>`;
+}
+function helpHtml(){
+  return `<div class="overlay" data-act="closehelp"><div class="modal rules" onclick="event.stopPropagation()">
+  <h2 style="font-size:1.6rem">Règles en bref</h2>
+  <h3>À ton tour</h3><ul>
+  <li><b>Obligatoire :</b> prends les 3 jetons d'un emplacement du plateau central et pose-les sur ton plateau.</li>
+  <li><b>Optionnel, 1 fois :</b> prends une carte Animal (4 cartes en cours au maximum).</li>
+  <li><b>Optionnel, à volonté :</b> pose un cube Animal quand le motif d'une carte est réalisé (dans n'importe quelle orientation). Le cube va sur la case entourée en orange.</li></ul>
+  <h3>Empilements</h3><ul>
+  <li>Montagne : 1 à 3 jetons gris empilés.</li><li>Arbre : 1 vert sur 0, 1 ou 2 marron.</li>
+  <li>Bâtiment : 1 rouge sur un marron, gris ou rouge.</li><li>Eau et champs ne s'empilent pas. Rien ne se pose sur un cube.</li></ul>
+  <h3>Points</h3><ul>
+  <li>Arbres : 1 / 3 / 7 selon la hauteur.</li>
+  <li>Montagnes : 1 / 3 / 7, seulement si elles touchent une autre montagne.</li>
+  <li>Champs : 5 par groupe d'au moins 2 jetons jaunes.</li>
+  <li>Bâtiments : 5 si entourés d'au moins 3 couleurs différentes.</li>
+  <li>Rivière (la plus longue) : 0 / 2 / 5 / 8 / 11 / 15, puis +4 par jeton au-delà de 6.</li>
+  <li>Animaux : la dernière valeur découverte sur chaque carte.</li></ul>
+  <h3>Fin de partie</h3><ul><li>Quand le sac ne suffit plus pour compléter le plateau central, ou qu'un joueur termine son tour avec 2 cases vides ou moins. On finit le tour de table.</li></ul>
+  <div class="actions"><button class="btn" data-act="closehelp">Fermer</button></div></div></div>`;
+}
+function turnOverlay(){
+  const p=me();
+  return `<div class="overlay"><div class="modal" style="text-align:center">
+    <p style="margin:0">Tour ${p.turns+1}${S.endTriggered?' — dernier tour !':''}</p>
+    <h1 style="color:${p.color}">À toi, ${esc(p.name)}</h1>
+    <p>${S.endTriggered?'La fin de partie est déclenchée : c\'est le dernier tour de table.':'Choisis un emplacement de 3 jetons sur le plateau central.'}</p>
+    <div class="actions" style="justify-content:center"><button class="btn" data-act="closeov">C'est parti</button></div></div></div>`;
+}
+function endOverlay(){
+  const rows=S.players.map(p=>({p,sc:score(p),cubes:cubesPlaced(p)}));
+  const ranked=[...rows].sort((a,b)=>b.sc.total-a.sc.total||b.cubes-a.cubes);
+  const w=ranked[0];const tie=ranked.filter(r=>r.sc.total===w.sc.total&&r.cubes===w.cubes).length>1;
+  const line=(lab,f)=>`<tr><td>${lab}</td>${rows.map(r=>`<td>${f(r)}</td>`).join('')}</tr>`;
+  return `<div class="overlay"><div class="modal">
+  <p style="margin:0">Partie terminée</p>
+  <h1>${tie?'Égalité parfaite':esc(w.p.name)+' gagne'}</h1>
+  <table class="final"><tr><th></th>${rows.map(r=>`<th style="color:${r.p.color}">${esc(r.p.name)}</th>`).join('')}</tr>
+  ${line('Arbres',r=>r.sc.trees)}${line('Montagnes',r=>r.sc.mountains)}${line('Champs',r=>r.sc.fields)}${line('Bâtiments',r=>r.sc.buildings)}${line('Rivière',r=>r.sc.water)}
+  ${line('Paysages',r=>'<b>'+r.sc.landscape+'</b>')}${line('Animaux',r=>'<b>'+r.sc.animals+'</b>')}${line('Cubes posés',r=>r.cubes)}
+  <tr class="total"><td>Total</td>${rows.map(r=>`<td>${r.sc.total}</td>`).join('')}</tr></table>
+  <div class="actions"><button class="btn" data-act="rematch">Revanche</button><button class="btn ghost" data-act="closeov">Voir les plateaux</button><button class="btn ghost" data-act="home">Accueil</button></div></div></div>`;
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function gameScreen(){
+  const p=me();const sc=score(p);
+  const others=S.players.filter((_,i)=>i!==S.current);
+  let hint;
+  if(S.over)hint='Partie terminée.';
+  else if(UI.cubeCard!==null)hint='Clique une case entourée d\'orange pour y poser le cube.';
+  else if(!S.tookSlot)hint='Choisis un emplacement de 3 jetons sur le plateau central.';
+  else if(S.hand.length)hint=`Pose ton jeton <b>${COLOR_FR[S.hand[UI.sel]]}</b> sur une case en surbrillance. Clique un autre jeton pour changer.`;
+  else hint='Jetons posés. Pose des cubes si tu peux, prends une carte, puis termine ton tour.';
+  const noLegal=S.hand.length&&!Object.values(p.board).some(c=>canPlace(c,S.hand[UI.sel]));
+  return `
+  <header class="top">
+    <div class="brand">Verdance</div>
+    <div class="players">${S.players.map((pl,i)=>`<div class="pchip ${i===S.current?'on':''}"><span class="dot" style="background:${pl.color}">${esc(pl.name[0]||'?')}</span><span>${esc(pl.name)}</span><b>${score(pl).total}</b><small>pts</small></div>`).join('')}</div>
+    <div class="meta"><span>Sac <strong>${S.bag.length}</strong></span><span>Pioche <strong>${S.deck.length}</strong></span>${S.endTriggered&&!S.over?'<strong style="color:var(--red)">Dernier tour</strong>':''}
+    <button class="btn ghost small" data-act="help">Règles</button><button class="btn ghost small" data-act="home">Quitter</button></div>
+  </header>
+  <main class="layout">
+    <div class="stack-col">
+      <section class="panel"><h2>Plateau central <small>${S.tookSlot?'emplacement pris':'choisis 3 jetons'}</small></h2>
+        <div class="central">${S.slots.map((sl,i)=>`<button class="slot ${!S.tookSlot&&sl.length&&!S.over?'can':''} ${sl.length?'':'empty'}" data-act="slot" data-i="${i}" ${S.tookSlot||!sl.length||S.over?'disabled':''} aria-label="Emplacement ${i+1}">${sl.map(c=>tokenSvg(c,40)).join('')}</button>`).join('')}</div>
+      </section>
+      <section class="panel"><h2>Ta main <small>${S.hand.length} jeton(s)</small></h2>
+        <div class="hand">${S.hand.map((c,i)=>`<button class="htok ${i===UI.sel&&UI.cubeCard===null?'sel':''}" data-act="sel" data-i="${i}" aria-label="${COLOR_FR[c]}">${tokenSvg(c,52)}</button>`).join('')||'<span class="hint">Vide</span>'}</div>
+        <p class="hint">${hint}${handStuck()?'<br><b style="color:var(--red)">Aucun de tes jetons ne peut être posé : ils seront défaussés en fin de tour.</b>':noLegal?'<br><b style="color:var(--red)">Ce jeton ne peut aller nulle part : choisis-en un autre.</b>':''}</p>
+        <div class="actions"><button class="btn" data-act="end" ${S.tookSlot&&(!S.hand.length||handStuck())&&!S.over?'':'disabled'}>Terminer le tour</button><button class="btn ghost" data-act="undo" ${history.length&&!S.over?'':'disabled'}>Annuler</button></div>
+      </section>
+      <section class="panel"><h2>Cartes Animal <small>${S.tookCard?'carte déjà prise':'1 par tour'}</small></h2>
+        <div class="market">${S.market.map((id,i)=>cardHtml({id},{mode:'market',idx:i})).join('')}${S.deck.length?`<div class="deck">${S.deck.length}<br>cartes</div>`:''}</div>
+      </section>
+    </div>
+    <section class="panel boardwrap">
+      <div class="boardhead"><h2 style="color:${p.color}">Paysage de ${esc(p.name)}</h2><span class="hint">${emptyCells(p)} cases vides</span></div>
+      ${boardSvg(p,{interactive:!S.over})}
+      <div class="mycards">${[0,1,2,3].map(i=>p.cards[i]?cardHtml(p.cards[i],{mode:'mine',idx:i,placed:p.cards[i].placed}):'<div class="slotempty">Emplacement libre</div>').join('')}</div>
+      ${p.done.length?`<div class="done">${p.done.map(c=>`<span>${CARDS[c.id].name} <b>${CARDS[c.id].pts[c.placed-1]}</b></span>`).join('')}</div>`:''}
+    </section>
+    <div class="stack-col right">
+      <section class="panel"><h2>Score de ${esc(p.name)} <small>en direct</small></h2>${scoreHtml(sc)}</section>
+      ${others.map(o=>{const os=score(o);return `<section class="panel opp"><h3><span style="color:${o.color}">${esc(o.name)}</span><span>${os.total} pts</span></h3>${boardSvg(o,{R:52})}
+        <div class="oppcards">${[...o.cards,...o.done].map(c=>`<span style="--band:var(--${REQ[CARDS[c.id].cells[0][0]].color})">${CARDS[c.id].name} ${c.placed}/${CARDS[c.id].pts.length}</span>`).join('')}</div></section>`;}).join('')}
+    </div>
+  </main>`;
+}
+
+function render(){
+  const app=document.getElementById('app');
+  let html='';
+  if(!S)html=setupScreen();
+  else{html=gameScreen();if(UI.overlay?.type==='turn')html+=turnOverlay();if(UI.overlay?.type==='end')html+=endOverlay();}
+  if(UI.help)html+=helpHtml();
+  if(UI.toast)html+=`<div class="toast">${esc(UI.toast)}</div>`;
+  app.innerHTML=html;
+}
+
+/* ================= Événements ================= */
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const act=el.dataset.act,i=+el.dataset.i,k=el.dataset.k;
+  switch(act){
+    case 'start':{const names=[...document.querySelectorAll('#names input')].map((x,j)=>x.value.trim()||('Joueur '+(j+1)));newGame(names);break;}
+    case 'resume':{const d=load();if(d){S=d.S;history=d.history||[];UI.overlay={type:'turn'};render();}break;}
+    case 'addp':{const box=document.getElementById('names');if(box.children.length<4){box.insertAdjacentHTML('beforeend',`<div class="field"><input value="Joueur ${box.children.length+1}" maxlength="16"></div>`);}break;}
+    case 'rmp':{const box=document.getElementById('names');if(box.children.length>1)box.lastElementChild.remove();break;}
+    case 'help':UI.help=true;render();break;
+    case 'closehelp':UI.help=false;render();break;
+    case 'closeov':UI.overlay=null;render();break;
+    case 'home':S=null;UI.overlay=null;render();break;
+    case 'rematch':newGame(S.players.map(p=>p.name));break;
+    case 'slot':takeSlot(i);break;
+    case 'sel':UI.sel=i;UI.cubeCard=null;render();break;
+    case 'place':placeToken(k);break;
+    case 'take':takeCard(i);break;
+    case 'cubemode':startCube(i);break;
+    case 'cube':placeCube(k);break;
+    case 'end':endTurn();break;
+    case 'undo':undo();break;
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(!S||S.over)return;
+  if((e.metaKey||e.ctrlKey)&&e.key==='z'){e.preventDefault();undo();}
+  if(e.key==='Escape'){UI.cubeCard=null;UI.help=false;render();}
+});
+render();
+</script>
+</body>
+</html>
