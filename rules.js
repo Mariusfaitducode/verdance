@@ -27,39 +27,65 @@ const DIRS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
 // 32 cartes Animal originales.
 // La 1re case porte le cube. n cubes posés = n-ième valeur.
 const CARDS = [
-  ['Fennec', [3, 7, 12], [['F', 0, 0], ['M1', 1, 0]]],
+  ['Lièvre', [3, 7, 12], [['F', 0, 0], ['M1', 1, 0]]],
   ['Lapin', [2, 5, 9, 14], [['F', 0, 0], ['F', 0, -1]]],
-  ['Abeille', [4, 9, 15], [['F', 0, 0], ['T1', 1, 0], ['T1', -1, 1]]],
-  ['Perdrix', [5, 11], [['F', 0, 0], ['B', 0, -1], ['W', 0, 1]]],
-  ['Hamster', [3, 7, 12], [['F', 0, 0], ['B', 1, -1]]],
-  ['Alouette', [4, 9], [['F', 0, 0], ['F', 0, 1], ['F', 0, 2]]],
-  ['Coccinelle', [3, 8, 13], [['F', 0, 0], ['T2', 1, 0]]],
+  ['Rat des moissons', [4, 9, 15], [['F', 0, 0], ['T1', 1, 0], ['T1', -1, 1]]],
+  ['Campagnol', [5, 11], [['F', 0, 0], ['B', 0, -1], ['W', 0, 1]]],
+  ['Mulot', [3, 7, 12], [['F', 0, 0], ['B', 1, -1]]],
+  ['Blaireau', [4, 9], [['F', 0, 0], ['F', 0, 1], ['F', 0, 2]]],
+  ['Belette', [3, 8, 13], [['F', 0, 0], ['T2', 1, 0]]],
   ['Loutre', [3, 7, 12], [['W', 0, 0], ['W', 1, 0], ['T1', 0, -1]]],
-  ['Héron', [5, 11], [['W', 0, 0], ['F', 0, 1], ['F', 0, -1]]],
-  ['Grenouille', [2, 5, 9, 14], [['W', 0, 0], ['T1', 1, 0]]],
+  ['Vison', [5, 11], [['W', 0, 0], ['F', 0, 1], ['F', 0, -1]]],
+  ["Musaraigne d'eau", [2, 5, 9, 14], [['W', 0, 0], ['T1', 1, 0]]],
   ['Castor', [4, 9, 15], [['W', 0, 0], ['T2', 1, -1], ['W', 0, 1]]],
-  ['Martin-pêcheur', [5, 12], [['W', 0, 0], ['T3', 0, -1]]],
-  ['Canard', [3, 7, 12], [['W', 0, 0], ['F', 1, 0]]],
-  ['Flamant', [4, 9, 15], [['W', 0, 0], ['W', 1, 0], ['W', 0, 1]]],
+  ['Desman', [5, 12], [['W', 0, 0], ['T3', 0, -1]]],
+  ["Rat d'eau", [3, 7, 12], [['W', 0, 0], ['F', 1, 0]]],
+  ['Putois', [4, 9, 15], [['W', 0, 0], ['W', 1, 0], ['W', 0, 1]]],
   ['Bouquetin', [4, 10, 17], [['M2', 0, 0], ['M1', 1, 0]]],
-  ['Aigle', [6, 14], [['M3', 0, 0], ['M2', 0, 1]]],
+  ['Mouflon', [6, 14], [['M3', 0, 0], ['M2', 0, 1]]],
   ['Marmotte', [3, 7, 12], [['M1', 0, 0], ['F', 1, 0]]],
   ['Chamois', [5, 11], [['M2', 0, 0], ['M2', 1, -1]]],
   ['Chauve-souris', [4, 9, 15], [['M2', 0, 0], ['B', 1, 0]]],
   ['Ours', [5, 11, 18], [['M2', 0, 0], ['T3', 1, 0]]],
   ['Écureuil', [3, 7, 12], [['T2', 0, 0], ['T2', 1, 0]]],
-  ['Chouette', [5, 12], [['T3', 0, 0], ['B', 0, 1]]],
+  ['Martre', [5, 12], [['T3', 0, 0], ['B', 0, 1]]],
   ['Cerf', [4, 9, 15], [['T2', 0, 0], ['F', 0, 1], ['F', 1, 0]]],
   ['Hérisson', [2, 5, 9, 14], [['T1', 0, 0], ['F', 1, 0]]],
-  ['Pic-vert', [6, 14], [['T3', 0, 0], ['T3', 1, -1]]],
+  ['Chevreuil', [6, 14], [['T3', 0, 0], ['T3', 1, -1]]],
   ['Sanglier', [3, 8, 13], [['T2', 0, 0], ['M1', 1, 0]]],
   ['Loup', [5, 11, 18], [['T3', 0, 0], ['M2', 0, 1], ['T2', 0, -1]]],
   ['Souris', [4, 9, 15], [['B', 0, 0], ['F', 0, -1], ['F', 0, 1]]],
   ['Renard', [3, 7, 12], [['B', 0, 0], ['T1', 1, 0]]],
-  ['Hirondelle', [4, 9, 15], [['B', 0, 0], ['B', 1, 0]]],
-  ['Raton laveur', [4, 10], [['B', 0, 0], ['W', 0, 1], ['T2', 0, -1]]],
-  ['Cigogne', [5, 11], [['B', 0, 0], ['W', 1, 0], ['W', 1, -1]]],
+  ['Oreillard', [4, 9, 15], [['B', 0, 0], ['B', 1, 0]]],
+  ['Fouine', [4, 10], [['B', 0, 0], ['W', 0, 1], ['T2', 0, -1]]],
+  ['Chat sauvage', [5, 11], [['B', 0, 0], ['W', 1, 0], ['W', 1, -1]]],
 ].map(([name, pts, cells], id) => ({ id, name, pts, cells, color: REQ[cells[0][0]].color }));
+
+// Esprits du paysage : objectifs secrets de fin de partie (un par joueur, choisi parmi 2).
+// cells / animal servent à leur illustration.
+const isTree = (b, k) => { const s = b[k].stack; return s.length > 0 && s[s.length - 1] === 'green'; };
+const isBuilding = (b, k) => b[k].stack.length === 2 && b[k].stack[1] === 'red';
+const isWater = (b, k) => b[k].stack.length === 1 && b[k].stack[0] === 'blue';
+const isField = (b, k) => b[k].stack.length === 1 && b[k].stack[0] === 'yellow';
+const countCells = (b, f) => Object.keys(b).filter(k => f(k)).length;
+const SPIRITS = [
+  { name: 'Esprit des Sources', color: 'blue', text: '4 pts par case d’eau qui touche une forêt', cells: [['W', 0, 0], ['T2', 1, -1], ['W', 0, 1]],
+    score: p => 4 * countCells(p.board, k => isWater(p.board, k) && neighborsK(k).some(n => isTree(p.board, n))) },
+  { name: 'Esprit des Cimes', color: 'gray', text: '6 pts par montagne de 3 jetons', cells: [['M3', 0, 0], ['M2', 1, 0], ['M1', 0, 1]],
+    score: p => 6 * countCells(p.board, k => p.board[k].stack.length === 3 && isMountain(p.board, k)) },
+  { name: 'Esprit des Moissons', color: 'yellow', text: '3 pts par champ qui touche une maison', cells: [['F', 0, 0], ['B', 1, 0], ['F', 0, 1]],
+    score: p => 3 * countCells(p.board, k => isField(p.board, k) && neighborsK(k).some(n => isBuilding(p.board, n))) },
+  { name: 'Esprit des Bois profonds', color: 'green', text: '3 pts par arbre qui touche au moins 2 autres arbres', cells: [['T3', 0, 0], ['T2', 1, 0], ['T2', 0, 1]],
+    score: p => 3 * countCells(p.board, k => isTree(p.board, k) && neighborsK(k).filter(n => isTree(p.board, n)).length >= 2) },
+  { name: 'Esprit du Hameau', color: 'red', text: '4 pts par bâtiment qui touche un autre bâtiment', cells: [['B', 0, 0], ['B', 1, 0], ['T1', 0, 1]],
+    score: p => 4 * countCells(p.board, k => isBuilding(p.board, k) && neighborsK(k).some(n => isBuilding(p.board, n))) },
+  { name: 'Esprit de l’Équilibre', color: 'brown', text: '5 pts par série complète des 5 paysages (eau, montagne, arbre, champ, bâtiment)', cells: [['W', 0, 0], ['M2', 1, -1], ['T2', 1, 0], ['F', 0, 1], ['B', -1, 1]],
+    score: p => { const b = p.board; return 5 * Math.min(countCells(b, k => isWater(b, k)), countCells(b, k => isMountain(b, k)), countCells(b, k => isTree(b, k)), countCells(b, k => isField(b, k)), countCells(b, k => isBuilding(b, k))); } },
+  { name: 'Esprit des Rives', color: 'blue', text: '2 pts par case hors de l’eau qui borde ta plus longue rivière', cells: [['W', 0, 0], ['W', 1, 0], ['F', 0, 1], ['T1', 1, -1]],
+    score: p => { const lr = new Set(longestRiver(p.board).path); const near = new Set(); lr.forEach(k => neighborsK(k).forEach(n => { if (!lr.has(n) && p.board[n].stack.length && !isWater(p.board, n)) near.add(n); })); return 2 * near.size; } },
+  { name: 'Esprit des Bêtes', color: 'orange', text: '2 pts par animal accueilli', cells: [['T2', 0, 0], ['F', 1, 0], ['W', 0, 1]],
+    score: p => 2 * cubesPlaced(p) },
+];
 
 // Plateau face A : 23 cases, 5 colonnes de 5/4/5/4/5 (colonnes impaires décalées vers le bas)
 const BOARD_CELLS = (() => {
@@ -78,16 +104,27 @@ const neighborsK = k => { const c = CELL_BY_KEY[k]; return neighbors(c.q, c.r); 
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const clone = o => JSON.parse(JSON.stringify(o));
 
-function newState(names) {
+function newState(names, opts = {}) {
   const bag = []; for (const c of COLORS) for (let i = 0; i < BAG_COUNTS[c]; i++) bag.push(c); shuffle(bag);
   const deck = shuffle(CARDS.map(c => c.id));
-  return {
+  const st = {
     players: names.map((name, i) => ({ name, color: PLAYER_COLORS[i], board: Object.fromEntries(BOARD_CELLS.map(c => [c.k, { stack: [], cube: null }])), cards: [], done: [], turns: 0 })),
     current: 0, bag, deck, market: deck.splice(0, 5),
     slots: Array.from({ length: 5 }, () => bag.splice(0, 3)),
-    hand: [], tookSlot: false, tookCard: false, endTriggered: false, over: false,
+    hand: [], tookSlot: false, tookCard: false, endTriggered: false, over: false, freePlay: false, spirits: !!opts.spirits,
   };
+  if (opts.spirits) { const sp = shuffle(SPIRITS.map((_, i) => i)); st.players.forEach((p, i) => { p.spiritChoice = sp.slice(i * 2, i * 2 + 2); p.spirit = null; }); }
+  return st;
 }
+function chooseSpirit(S, pi, idx) { const p = S.players[pi]; if (!p.spiritChoice || p.spirit != null) return false; p.spirit = p.spiritChoice[idx]; return true; }
+// Continuer après la fin : on ignore les conditions de fin, la partie ne s'arrête plus que quand il n'y a plus rien à prendre.
+const tokensLeft = S => S.slots.some(s => s.length);
+function continueGame(S) {
+  if (!tokensLeft(S)) return false;
+  if (S.over) { S.over = false; S.current = (S.current + 1) % S.players.length; S.tookSlot = false; S.tookCard = false; S.hand = []; }
+  S.freePlay = true; S.endTriggered = false; return true;
+}
+function finishNow(S) { S.over = true; S.hand = []; }
 
 /* ---------- Placement ---------- */
 function canPlace(cell, color) {
@@ -182,8 +219,9 @@ function score(p) {
   res.fields = components(b, 'yellow').filter(c => c.length >= 2).length * 5;
   res.water = riverPoints(longestRiver(b).length);
   for (const c of [...p.cards, ...p.done]) if (c.placed > 0) res.animals += CARDS[c.id].pts[c.placed - 1];
+  res.spirit = p.spirit != null && SPIRITS[p.spirit] ? SPIRITS[p.spirit].score(p) : 0;
   res.landscape = res.trees + res.mountains + res.fields + res.buildings + res.water;
-  res.total = res.landscape + res.animals;
+  res.total = res.landscape + res.animals + res.spirit;
   return res;
 }
 const cubesPlaced = p => [...p.cards, ...p.done].reduce((a, c) => a + c.placed, 0);
@@ -226,9 +264,10 @@ function endTurn(S) {
     }
   }
   while (S.market.length < 5 && S.deck.length) S.market.push(S.deck.shift());
-  if (emptyCells(p) <= 2) S.endTriggered = true;
+  if (emptyCells(p) <= 2 && !S.freePlay) S.endTriggered = true;
   const next = (S.current + 1) % S.players.length;
-  if (S.endTriggered && next === 0) { S.over = true; return { over: true }; }
+  if (!tokensLeft(S)) { S.over = true; return { over: true, exhausted: true }; }
+  if (S.endTriggered && !S.freePlay && next === 0) { S.over = true; return { over: true }; }
   S.current = next; S.tookSlot = false; S.tookCard = false;
   return { over: false, next };
 }
@@ -238,6 +277,7 @@ function ranking(S) {
 }
 
 root.H = {
+  SPIRITS, chooseSpirit, continueGame, finishNow, tokensLeft,
   COLORS, COLOR_FR, BAG_COUNTS, PLAYER_COLORS, REQ, DIRS, CARDS, BOARD_CELLS, CELL_BY_KEY,
   key, neighbors, neighborsK, shuffle, clone, newState, canPlace, matches, cardTargets, patternCellsAt,
   score, cellPoints, longestRiver, components, isMountain, cubesPlaced, emptyCells, me, handStuck,

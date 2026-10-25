@@ -279,6 +279,9 @@ function jitter(g, amt, seed) { const p = g.attributes.position; for (let i = 0;
 function merge(list) { const g = mergeGeometries(list); g.computeVertexNormals(); return g; }
 function buildShared() {
   M.props = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.85 });
+  M.propsFade = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.85, transparent: true, opacity: .22, depthWrite: false });
+  M.halo = new THREE.MeshBasicMaterial({ color: '#fff3c4', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  G.halo = new THREE.RingGeometry(.12, .3, 32).rotateX(-Math.PI / 2);
   M.terrain = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95 });
   M.window = new THREE.MeshStandardMaterial({ color: '#ffd777', emissive: '#ffb347', emissiveIntensity: .7, flatShading: true });
   M.cube = new THREE.MeshStandardMaterial({ color: '#ee8d2a', roughness: .45, emissive: '#ff8a1a', emissiveIntensity: .15 });
@@ -601,14 +604,14 @@ function propMovers(isl) {
 /* ----- animaux : les cubes deviennent des animaux qui vivent sur leur case ----- */
 // carte -> [modèle, hauteur visée, comportement, teinte]
 const ANIMALS = {
-  'Fennec': ['fennec', .32, 'walk', '#e9c48a'], 'Lapin': ['rabbit', .24, 'hop'], 'Abeille': ['bee', .13, 'buzz'], 'Perdrix': ['partridge', .2, 'hop'],
-  'Hamster': ['hamster', .16, 'hop'], 'Alouette': ['lark', .17, 'hop'], 'Coccinelle': ['ladybug', .11, 'walk'], 'Loutre': ['otter', .22, 'swim'],
-  'Héron': ['heron', .5, 'still'], 'Grenouille': ['frog_animated', .14, 'hop'], 'Castor': ['beaver', .24, 'swim'], 'Martin-pêcheur': ['bluebird', .17, 'hop'],
-  'Canard': ['duck', .22, 'swim'], 'Flamant': ['flamingo', .55, 'still', '#f59bb2'], 'Bouquetin': ['ibex', .46, 'walk'], 'Aigle': ['eagle', .38, 'soar'],
-  'Marmotte': ['marmot', .24, 'still'], 'Chamois': ['chamois', .42, 'walk'], 'Chauve-souris': ['bat', .3, 'flutter'], 'Ours': ['bear', .52, 'walk'],
-  'Écureuil': ['squirrel', .2, 'hop'], 'Chouette': ['owl', .28, 'perch'], 'Cerf': ['stag', .62, 'walk'], 'Hérisson': ['hedgehog', .16, 'walk'],
-  'Pic-vert': ['woodpecker', .22, 'perch', '#6fae45'], 'Sanglier': ['boar', .36, 'walk'], 'Loup': ['wolf', .42, 'walk'], 'Souris': ['mouse', .12, 'walk'],
-  'Renard': ['fox', .34, 'walk'], 'Hirondelle': ['swallow', .17, 'soar'], 'Raton laveur': ['raccoon', .28, 'walk'], 'Cigogne': ['stork', .55, 'still'],
+  'Lièvre': ['rabbit', .26, 'hop', '#b08a5a'], 'Lapin': ['rabbit', .24, 'hop'], 'Rat des moissons': ['mouse', .12, 'walk', '#c08a52'], 'Campagnol': ['hamster', .14, 'hop', '#9a7650'],
+  'Mulot': ['mouse', .13, 'walk', '#a8794c'], 'Blaireau': ['raccoon', .26, 'walk', '#8d8a82'], 'Belette': ['fennec', .2, 'walk', '#b07a45'], 'Loutre': ['otter', .22, 'swim'],
+  'Vison': ['otter', .2, 'swim', '#4a3326'], "Musaraigne d'eau": ['mouse', .12, 'swim', '#3a3330'], 'Castor': ['beaver', .24, 'swim'], 'Desman': ['mouse', .13, 'swim', '#5a4535'],
+  "Rat d'eau": ['beaver', .18, 'swim', '#5a4a3a'], 'Putois': ['otter', .2, 'walk', '#3d2f25'], 'Bouquetin': ['ibex', .38, 'walk'], 'Mouflon': ['ibex', .36, 'walk', '#7a5338'],
+  'Marmotte': ['marmot', .24, 'still'], 'Chamois': ['chamois', .34, 'walk'], 'Chauve-souris': ['bat', .3, 'flutter'], 'Ours': ['bear', .42, 'walk'],
+  'Écureuil': ['squirrel', .2, 'hop'], 'Martre': ['fox', .3, 'walk', '#6b4a2e'], 'Cerf': ['stag', .5, 'walk'], 'Hérisson': ['hedgehog', .16, 'walk'],
+  'Chevreuil': ['stag', .38, 'walk', '#b0784a'], 'Sanglier': ['boar', .27, 'walk'], 'Loup': ['wolf', .34, 'walk'], 'Souris': ['mouse', .12, 'walk'],
+  'Renard': ['fox', .34, 'walk'], 'Oreillard': ['bat', .26, 'flutter'], 'Fouine': ['fox', .28, 'walk', '#5e4634'], 'Chat sauvage': ['fox', .3, 'walk', '#8a8173'],
 };
 const modelCache = {};
 function loadModel(file) {
@@ -624,7 +627,7 @@ function instance(gltf, spec) {
   obj.traverse(o => { if (o.isMesh) { o.castShadow = true; if (o.isSkinnedMesh) o.frustumCulled = false; if (spec[3]) { o.material = o.material.clone(); o.material.color.lerp(new THREE.Color(spec[3]), .55); } } });
   const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3());
   const ref = ['soar', 'flutter', 'buzz'].includes(spec[2]) ? Math.max(size.x, size.y, size.z) : size.y;
-  obj.scale.multiplyScalar(spec[1] * 1.7 / (ref || 1)); // plus grands que nature, pour se lire de loin
+  obj.scale.multiplyScalar(spec[1] * 1.45 / (ref || 1)); // plus grands que nature, pour se lire de loin
   box.setFromObject(obj); const ctr = box.getCenter(new THREE.Vector3());
   obj.position.x -= ctr.x; obj.position.z -= ctr.z; obj.position.y -= box.min.y;
   const wrap = new THREE.Group(); wrap.add(obj);
@@ -645,12 +648,14 @@ function buildAnimal(isl, k, card, animate) {
   const c = CELLS[CI[k]], name = H.CARDS[card] && H.CARDS[card].name, spec = ANIMALS[name] || ['fox', .3, 'walk'];
   const g = new THREE.Group(); g.position.set(c.x, isl.cells[k].top, c.z);
   const inForest = isl.A && isl.A.info[CI[k]].kind === 'forest';
-  g.userData = { k, spec, mode: spec[2], x: c.x + .1, z: c.z + (inForest ? .58 : .1), tx: c.x, tz: c.z, wait: Math.random() * 2, phase: Math.random() * 6.28, heading: Math.random() * 6.28 };
+  g.userData = { k, name, spec, mode: spec[2], x: c.x + .1, z: c.z + (inForest ? .58 : .1), tx: c.x, tz: c.z, wait: Math.random() * 2, phase: Math.random() * 6.28, heading: Math.random() * 6.28 };
+  const halo = new THREE.Mesh(G.halo, M.halo.clone()); halo.position.y = .02; halo.renderOrder = 6; g.add(halo); g.userData.halo = halo;
   isl.group.add(g); isl.animals[k] = g;
   loadModel(spec[0]).then(gltf => {
     if (isl.animals[k] !== g) return;
     if (!gltf) { const m = new THREE.Mesh(G.cube, M.cube); m.position.y = .11; g.add(m); return; }
     const inst = instance(gltf, spec); g.add(inst.wrap); g.userData.inst = inst; setAction(g.userData, 'Idle');
+    if (animate && cb.onAnimalArrive) cb.onAnimalArrive(name);
     if (animate) { g.scale.setScalar(.001); tween(700, p => g.scale.setScalar(Math.max(.001, p)), { delay: 150, easing: ease.outBack }); burst(isl, g.userData.x, isl.cells[k].top, g.userData.z); }
   });
 }
@@ -669,25 +674,41 @@ function tickAnimals(isl, t, dt) {
     }
     if (u.mode === 'perch') { g.position.set(c.x + .05, top - .04, c.z); g.rotation.y = u.phase + Math.sin(t * .4 + u.phase) * 1.2; continue; }
     if (u.mode === 'still') { const x = c.x + .18, z = c.z + .12; g.position.set(x, Math.max(heightAt(isl.A, x, z), WATER_Y - .02), z); g.rotation.y = u.phase + Math.sin(t * .3 + u.phase) * .8; continue; }
-    // marcheurs : petites promenades dans leur case
+    // marcheurs : ils se tournent, accélèrent, ralentissent en arrivant, flânent et regardent autour d'eux
+    const inst = u.inst, animated = inst && inst.mixer;
+    if (!u.st) { u.st = 'idle'; u.wait = 1 + Math.random() * 3; u.v = 0; u.look = 0; }
+    const maxV = (u.mode === 'hop' ? .2 : .07) + u.spec[1] * .16;
     const dx = u.tx - u.x, dz = u.tz - u.z, d = Math.hypot(dx, dz);
-    let moving = false;
-    if (d < 0.02) {
-      u.wait -= dt; setAction(u, 'Idle');
+    const want = Math.atan2(dx, dz); let diff = Math.atan2(Math.sin(want - u.heading), Math.cos(want - u.heading));
+    if (u.st === 'idle') {
+      u.v = Math.max(0, u.v - dt * .6); u.wait -= dt; setAction(u, 'Idle');
+      // de temps en temps, il tourne la tête (tout le corps, doucement)
+      u.look += dt; const lookOff = Math.sin(u.look * .7 + u.phase) * .35;
+      g.rotation.y = u.heading + lookOff;
       if (u.wait <= 0) {
-        // en forêt, on se promène en lisière (côté caméra) pour rester visible
-        const forest = isl.A.info[CI[k]].kind === 'forest', ox = forest ? 0 : 0, oz = forest ? .58 : 0, R = forest ? .22 : .45;
-        const a = Math.random() * 6.28, r = Math.random() * R; u.tx = c.x + ox + Math.cos(a) * r; u.tz = c.z + oz + Math.sin(a) * r * .6; u.wait = 2 + Math.random() * 4;
+        const forest = isl.A.info[CI[k]].kind === 'forest', oz = forest ? .58 : 0, R = forest ? .22 : .42;
+        const a = Math.random() * 6.28, r = .12 + Math.random() * R; u.tx = c.x + Math.cos(a) * r; u.tz = c.z + oz + Math.sin(a) * r * (forest ? .6 : 1);
+        u.st = 'turn'; u.heading += lookOff;
       }
+    } else if (u.st === 'turn') {
+      u.heading += diff * Math.min(1, dt * 3.5); setAction(u, 'Walk'); if (inst && inst.actions.Walk) inst.actions.Walk.timeScale = .5;
+      if (Math.abs(diff) < .15) u.st = 'walk';
     } else {
-      const sp = (u.mode === 'hop' ? .2 : .08) + u.spec[1] * .22, step = Math.min(d, sp * dt);
-      u.x += dx / d * step; u.z += dz / d * step; moving = true; setAction(u, 'Walk');
-      const want = Math.atan2(dx, dz); let diff = want - u.heading; diff = Math.atan2(Math.sin(diff), Math.cos(diff)); u.heading += diff * Math.min(1, dt * 6);
+      const target = d < .14 ? maxV * Math.max(.15, d / .14) : maxV;
+      u.v += (target - u.v) * Math.min(1, dt * 2.5);
+      u.heading += diff * Math.min(1, dt * 4);
+      const step = Math.min(d, u.v * dt); if (d > 1e-4) { u.x += dx / d * step; u.z += dz / d * step; }
+      setAction(u, 'Walk'); if (inst && inst.actions.Walk) inst.actions.Walk.timeScale = .6 + u.v / maxV * .7;
+      if (d < .01) { u.st = 'idle'; u.wait = 2.5 + Math.random() * 5; u.look = 0; }
     }
     let y = heightAt(isl.A, u.x, u.z);
     y = u.mode === 'swim' ? Math.max(y, WATER_Y - .04) : Math.max(y, WATER_Y);
-    if (moving && !(u.inst && u.inst.mixer)) y += Math.abs(Math.sin(t * (u.mode === 'hop' ? 11 : 14) + u.phase)) * (u.mode === 'hop' ? .06 : .015);
-    g.position.set(u.x, y, u.z); g.rotation.y = u.heading;
+    if (u.st === 'walk' && !animated) {
+      u.gait = (u.gait || 0) + dt * (u.mode === 'hop' ? 7 : 11) * (u.v / maxV);
+      y += u.mode === 'hop' ? Math.max(0, Math.sin(u.gait)) * .055 : Math.abs(Math.sin(u.gait)) * .01;
+      g.rotation.x = u.mode === 'hop' ? -Math.cos(u.gait) * .12 * Math.max(0, Math.sin(u.gait)) : 0;
+    } else g.rotation.x *= .9;
+    g.position.set(u.x, y, u.z); if (u.st !== 'idle') g.rotation.y = u.heading;
   }
 }
 
@@ -771,6 +792,108 @@ function refreshHighlights(force) {
   }
 }
 
+/* ================= Illustrations des cartes : petits dioramas 3D ================= */
+const PW = 480, PH = 330;
+let PR = null, portraitChain = Promise.resolve();
+const portraitCache = {};
+function portraitRig() {
+  if (PR) return PR;
+  const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  r.setPixelRatio(1); r.setSize(PW, PH); r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.12;
+  r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
+  const sc = new THREE.Scene();
+  sc.add(new THREE.HemisphereLight('#fff4de', '#6f6248', 1.35));
+  const d = new THREE.DirectionalLight('#fff0d2', 2.5); d.position.set(3, 7, 5); d.castShadow = true; d.shadow.mapSize.set(1024, 1024);
+  const c = d.shadow.camera; c.left = -4; c.right = 4; c.top = 4; c.bottom = -4; d.shadow.bias = -0.0006; d.shadow.normalBias = .02;
+  sc.add(d, d.target);
+  const rim = new THREE.DirectionalLight('#cfe3ff', .7); rim.position.set(-5, 3, -4); sc.add(rim);
+  PR = { r, sc, cam: new THREE.PerspectiveCamera(26, PW / PH, .1, 100), root: new THREE.Group() }; sc.add(PR.root);
+  M.pWater = new THREE.MeshStandardMaterial({ color: '#3f9fd0', roughness: .12, metalness: .05, transparent: true, opacity: .92 });
+  return PR;
+}
+function paintByHeight(geo, fn) {
+  const g = geo.index ? geo.toNonIndexed() : geo; g.deleteAttribute('uv'); g.deleteAttribute('normal');
+  const p = g.attributes.position, a = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i += 3) { const y = (p.getY(i) + p.getY(i + 1) + p.getY(i + 2)) / 3; const c = fn(y, i); for (let q = 0; q < 3; q++) { a[(i + q) * 3] = c.r; a[(i + q) * 3 + 1] = c.g; a[(i + q) * 3 + 2] = c.b; } }
+  g.setAttribute('color', new THREE.BufferAttribute(a, 3)); return g;
+}
+const TILE_TOP = { W: '#d9c793', F: '#e0b64a', M1: '#8f9a5c', M2: '#8f9a5c', M3: '#8f9a5c', T1: '#79b04c', T2: '#62a043', T3: '#548f39', B: '#93c25d' };
+function portraitCell(root, req, x, z, r) {
+  const add = (geo, mat = M.props, px = 0, py = 0, pz = 0, ry = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x + px, py, z + pz); m.rotation.y = ry; m.castShadow = m.receiveShadow = true; m.userData.own = true; root.add(m); return m; };
+  const tile = merge([paint(new THREE.CylinderGeometry(.97, .97, .08, 6).rotateY(Math.PI / 6).translate(0, -.04, 0), TILE_TOP[req]),
+    paint(jitter(new THREE.CylinderGeometry(.97, .9, .42, 6, 2).rotateY(Math.PI / 6).translate(0, -.29, 0), .05, x * 7 + z), '#a5805a')]);
+  add(tile);
+  let top = 0;
+  if (req === 'W') {
+    add(new THREE.CylinderGeometry(.84, .84, .03, 28), M.pWater, 0, -.005);
+    for (let i = 0; i < 4; i++) { const a = r() * 6.28; add(makeReed(r), M.props, Math.cos(a) * .84, 0, Math.sin(a) * .84); }
+    if (r() < .7) add(makeLily(r), M.props, (r() - .5) * .5, .02, (r() - .5) * .5, r() * 6);
+    top = .01;
+  } else if (req === 'F') {
+    const parts = []; for (let u = -.8; u <= .8; u += .14) for (let v = -.8; v <= .8; v += .12) { if (hexDist(u, v) > .8 || r() < .1) continue; makeTuft(r).forEach(g => parts.push(g.translate(u, 0, v))); }
+    add(merge(parts)); top = 0;
+  } else if (req[0] === 'M') {
+    const n = +req[1], ph = [0, .62, 1.15, 1.75][n];
+    const g = jitter(new THREE.ConeGeometry(.88, ph, 7, 3).translate(0, ph / 2, 0), .09, x * 3 + z * 5);
+    add(paintByHeight(g, (y, i) => n === 3 && y > ph * .68 ? PAL.snow : (hash2(i, n) > .5 ? PAL.rock : PAL.rock2)), M.props, 0, 0, 0, r() * 6);
+    if (n >= 2) { const g2 = jitter(new THREE.ConeGeometry(.42, ph * .5, 6, 2).translate(0, ph * .25, 0), .05, x + 9); add(paintByHeight(g2, (y, i) => hash2(i, 3) > .5 ? PAL.rock2 : PAL.rockDark), M.props, .5, 0, .28); }
+    for (let i = 0; i < 2; i++) add(makeRock(r, 1 + r() * .6, '#8f8278').geo, M.props, (r() - .5) * 1.2, 0, .55 + r() * .2);
+    top = ph * .96;
+  } else if (req[0] === 'T') {
+    const n = +req[1], cnt = [0, 3, 4, 5][n], sc = [0, .65, .9, 1.12][n];
+    const pts = scatter(r, 0, 0, cnt, .72, .3 * sc);
+    pts.forEach(([px, pz], i) => { const o = n === 1 && i ? makeBush(r, 1.4) : r() < [0, .2, .4, .7][n] ? makePine(r, sc) : makeRound(r, sc); add(o.geo, M.props, px, 0, pz, r() * 6); });
+    top = 0;
+  } else if (req === 'B') {
+    const hs = makeHouse(r, ['brown', 'gray', 'red'][r() * 3 | 0]); const ry = .5 + r() * .6;
+    add(hs.geo, M.props, -.1, 0, -.15, ry); add(hs.winGeo, M.window, -.1, 0, -.15, ry);
+    add(makeBush(r, 1.1).geo, M.props, .5, 0, .2); add(makeRound(r, .55).geo, M.props, -.55, 0, .35);
+    top = 0;
+  }
+  return top;
+}
+function wispMesh(color) {
+  const g = new THREE.Group();
+  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(.16, 2), new THREE.MeshStandardMaterial({ color: '#fffbe8', emissive: color, emissiveIntensity: 2.2 }));
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d');
+  const gr = x.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,250,220,1)'); gr.addColorStop(.3, color); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .9 })); halo.scale.setScalar(1.3);
+  g.add(core, halo);
+  for (let i = 0; i < 9; i++) { const m = new THREE.Sprite(halo.material); const a = i / 9 * 6.28; m.position.set(Math.cos(a) * (.45 + (i % 3) * .15), (i % 4) * .14 - .2, Math.sin(a) * (.45 + (i % 2) * .2)); m.scale.setScalar(.14 + (i % 3) * .05); g.add(m); }
+  return g;
+}
+async function renderPortrait(spec) {
+  const P = portraitRig(); const root = P.root;
+  root.traverse(o => { if (o.isMesh && o.userData.own) o.geometry.dispose(); }); root.clear();
+  const r = rng('portrait:' + spec.key);
+  const tops = spec.cells.map(([req, q, rr]) => { const x = 1.5 * q, z = SQ3 * (rr + q / 2); return { x, z, top: portraitCell(root, req, x, z, r), req }; });
+  if (spec.animal && ANIMALS[spec.animal]) {
+    const a = ANIMALS[spec.animal], gltf = await loadModel(a[0]);
+    if (gltf) {
+      const inst = instance(gltf, a); const t = tops[0];
+      const front = t.req[0] === 'T' || t.req === 'B' ? .62 : .15;
+      inst.wrap.scale.setScalar(2.15); inst.wrap.position.set(t.x, t.top + (['soar', 'flutter', 'buzz'].includes(a[2]) ? .9 : 0), t.z + front);
+      inst.wrap.rotation.y = .95; inst.wrap.traverse(o => { if (o.isMesh) o.castShadow = true; });
+      if (inst.mixer && inst.actions.Idle) { inst.actions.Idle.play(); inst.mixer.update(.6); }
+      root.add(inst.wrap);
+    }
+  }
+  if (spec.wisp) { const w = wispMesh(spec.wisp); const box = new THREE.Box3().setFromObject(root); w.position.set((box.min.x + box.max.x) / 2, box.max.y + .45, (box.min.z + box.max.z) / 2); root.add(w); }
+  const box = new THREE.Box3().setFromObject(root), c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+  const dist = Math.max(size.x * 1.25, size.z * 1.1, size.y * 1.5) / (2 * Math.tan(THREE.MathUtils.degToRad(13))) * .62 + 1.5;
+  P.cam.position.copy(c).add(new THREE.Vector3(.35, .78, 1).normalize().multiplyScalar(dist)); P.cam.lookAt(c.x, c.y - size.y * .05, c.z);
+  const sh = P.sc.children.find(o => o.isDirectionalLight && o.castShadow); sh.target.position.copy(c); sh.position.copy(c).add(new THREE.Vector3(3, 7, 5));
+  P.r.render(P.sc, P.cam);
+  return P.r.domElement.toDataURL('image/png');
+}
+// spec : { key, cells: [[req, q, r], ...], animal: nom de carte, wisp: couleur }
+Scene.portrait = function (spec) {
+  if (!Scene.ready) return Promise.resolve(null);
+  if (!portraitCache[spec.key]) portraitCache[spec.key] = portraitChain = portraitChain.then(() => renderPortrait(spec)).catch(e => { console.warn('portrait', e); return null; });
+  return portraitCache[spec.key];
+};
+
 /* ================= Synchronisation ================= */
 Scene.sync = function (state, v) {
   if (!Scene.ready) return;
@@ -788,13 +911,20 @@ function flyTo(target, offset, dur = 1300) {
   tween(dur, p => { controls.target.lerpVectors(t0, target, p); camera.position.lerpVectors(p0, p1, p); }, { easing: ease.inOutCubic });
 }
 const defaultOffset = () => new THREE.Vector3(0, 14.2, 12.6).multiplyScalar(framing.dist);
-Scene.focus = function (i, { instant = false, keepAngle = true } = {}) {
+Scene.focus = function (i, { instant = false, keepAngle = true, dur = 1300 } = {}) {
   if (!Scene.ready || !islands[i]) return;
   const target = islands[i].center.clone();
   const off = keepAngle ? camera.position.clone().sub(controls.target) : defaultOffset();
-  if (off.length() < 5) off.copy(defaultOffset());
+  if (off.length() < defaultOffset().length() * .6) off.copy(defaultOffset()); // au sortir d'un zoom, on reprend la vue normale
   if (instant) { controls.target.copy(target); camera.position.copy(target.clone().add(off)); return; }
-  flyTo(target, off);
+  flyTo(target, off, dur);
+};
+// Plonge vers une case (pour montrer un animal de près), puis Scene.focus pour revenir
+Scene.zoomTo = function (pi, k, { dur = 450, dist = 4.2 } = {}) {
+  const isl = islands[pi]; if (!isl) return; const c = CELLS[CI[k]];
+  const target = new THREE.Vector3(c.x, isl.cells[k].top * .6, c.z); isl.group.localToWorld(target);
+  const off = camera.position.clone().sub(controls.target).setLength(dist); off.y = Math.max(off.y, dist * .55);
+  flyTo(target, off.setLength(dist), dur);
 };
 Scene.topView = function () {
   const d = camera.position.distanceTo(controls.target);
@@ -803,11 +933,11 @@ Scene.topView = function () {
 };
 Scene.resetView = function (i) { flyTo(islands[i] ? islands[i].center.clone() : controls.target.clone(), defaultOffset(), 900); };
 Scene.autoRotate = function (on) { if (controls) controls.autoRotate = on; };
-Scene.overview = function () {
+Scene.overview = function (dur = 1600) {
   if (!islands.length) return;
   const c = new THREE.Vector3(); islands.forEach(isl => c.add(isl.center)); c.divideScalar(islands.length);
   const span = (islands.length - 1) * ISLAND_GAP;
-  flyTo(c, new THREE.Vector3(0, 10 + span * 0.55, 10 + span * 0.65), 1600);
+  flyTo(c, new THREE.Vector3(0, 10 + span * 0.55, 10 + span * 0.65), dur);
 };
 Scene.screenPos = function (pi, k) {
   const isl = islands[pi]; if (!isl) return null; const c = CELLS[CI[k]];
@@ -833,17 +963,23 @@ function pick(ev) {
   }
   return null;
 }
+let faded = null;
+function fadeCell(h) {
+  if (faded) { faded.traverse(o => { if (o.isMesh && o.userData.mat0) { o.material = o.userData.mat0; delete o.userData.mat0; } }); faded = null; }
+  if (!h) return; const isl = islands[h.pi]; if (!isl || !isl.animals[h.k]) return;
+  const grp = isl.cells[h.k].group; grp.traverse(o => { if (o.isMesh && o.material === M.props) { o.userData.mat0 = o.material; o.material = M.propsFade; } }); faded = grp;
+}
 function bindPointer() {
   const el = renderer.domElement; let down = null;
   el.addEventListener('pointermove', ev => {
     const h = pick(ev);
     const changed = (h && h.k) !== (hover && hover.k) || (h && h.pi) !== (hover && hover.pi);
-    hover = h; if (changed) refreshHighlights();
+    hover = h; if (changed) { refreshHighlights(); fadeCell(h); if (h && islands[h.pi] && islands[h.pi].animals[h.k] && cb.onAnimalHover) cb.onAnimalHover(islands[h.pi].animals[h.k].userData.name); }
     const act = h && h.pi === view.activeIdx && (view.legal.includes(h.k) || view.targets.includes(h.k));
     el.style.cursor = act ? 'pointer' : 'grab';
     cb.onHover && cb.onHover(h, ev.clientX, ev.clientY);
   });
-  el.addEventListener('pointerleave', () => { hover = null; refreshHighlights(); cb.onHover && cb.onHover(null); });
+  el.addEventListener('pointerleave', () => { hover = null; fadeCell(null); refreshHighlights(); cb.onHover && cb.onHover(null); });
   el.addEventListener('pointerdown', ev => { down = { x: ev.clientX, y: ev.clientY }; });
   el.addEventListener('pointerup', ev => {
     if (!down) return; const moved = Math.hypot(ev.clientX - down.x, ev.clientY - down.y); down = null;
@@ -915,6 +1051,7 @@ function loop() {
   for (const isl of islands) {
     for (const cg of isl.props.children) for (const m of cg.children) { const s = m.userData.sway; if (s) { m.rotation.z = Math.sin(t * 1.3 + m.userData.px * 3 + m.userData.pz) * 0.025 * s; m.rotation.x = Math.cos(t * 1.1 + m.userData.pz * 2) * 0.015 * s; } }
     tickAnimals(isl, t, dt);
+    for (const k in isl.animals) { const g = isl.animals[k], u = g.userData, on = hover && hover.pi === isl.idx && hover.k === k; if (u.inst) { const s0 = u.inst.wrap.scale.x, s1 = on ? 1.4 : 1; u.inst.wrap.scale.setScalar(s0 + (s1 - s0) * Math.min(1, dt * 8)); } if (u.halo) { const m = u.halo.material; m.opacity += ((on ? .85 : 0) - m.opacity) * Math.min(1, dt * 8); u.halo.scale.setScalar(1 + Math.sin(t * 4) * .08); } }
     for (const k in isl.cells) { const gc = isl.cells[k].ghostCube; if (gc && gc.visible) { const c = CELLS[CI[k]]; gc.position.set(c.x, isl.cells[k].top + 0.45 + Math.sin(t * 3 + c.x) * 0.07, c.z); gc.rotation.y = t * 1.2; gc.scale.setScalar(hover && hover.k === k ? 1.3 : 1); } }
   }
   if (ghost) ghost.position.y = ghost.userData.baseY + Math.sin(t * 3) * 0.05;

@@ -432,7 +432,7 @@ function setupScreen(){
     <h1>Verdance</h1>
     <p>Construisez un paysage jeton après jeton : forêts, montagnes, rivières, champs et villages. Réalisez les motifs des cartes Animal pour y faire venir la faune.</p>
     <h3 style="margin-top:1.2rem">Joueurs</h3>
-    <div id="names">${['Marius','Yasmine'].map((n,i)=>`<div class="field"><input value="${n}" maxlength="16" aria-label="Joueur ${i+1}"></div>`).join('')}</div>
+    <div id="names">${['Alice','Bob'].map((n,i)=>`<div class="field"><input value="${n}" maxlength="16" aria-label="Joueur ${i+1}"></div>`).join('')}</div>
     <div class="actions"><button class="btn ghost small" data-act="addp">+ Ajouter un joueur</button><button class="btn ghost small" data-act="rmp">– Retirer</button></div>
     <div class="actions" style="margin-top:1.4rem"><button class="btn" data-act="start">Nouvelle partie</button>${saved?'<button class="btn warm" data-act="resume">Reprendre la partie</button>':''}<button class="btn ghost" data-act="help">Règles</button></div>
   </div></div>`;

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verdance — maquette des cartes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..900,100;1,9..144,400..900,100&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="cards.css">
+<style>
+  body{margin:0;min-height:100vh;font-family:Figtree,system-ui,sans-serif;color:#2b2820;
+    background:radial-gradient(ellipse at 50% 0%,#f6eedb,#e3d2ad 70%,#d4bf93)}
+  main{max-width:1180px;margin:0 auto;padding:48px 24px 64px}
+  h1{font-family:Fraunces,serif;font-weight:800;font-size:2.6rem;margin:0;color:#1f4f41;letter-spacing:-.02em}
+  p.lead{color:#5f5646;max-width:640px;line-height:1.55}
+  .row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-end;margin:28px 0}
+  h2{font-family:Fraunces,serif;font-size:1.2rem;margin:36px 0 0;color:#3b352a}
+  .note{font-size:.85rem;color:#7a6f5a}
+</style>
+</head>
+<body>
+<main>
+  <h1>Les cartes Animal</h1>
+  <p class="lead">Une peinture naturaliste pleine page, une colonne de cubes sur le côté comme sur les vraies cartes, et un bandeau de papier avec le nom et le motif à réaliser. Les peintures viennent de l'<i>Atlas de poche des mammifères de France</i> (vers 1900), dans le domaine public.</p>
+  <h2>Taille réelle à l'écran de jeu, puis agrandie</h2>
+  <div class="row" id="small"></div>
+  <div class="row" id="big"></div>
+  <h2>En cours de partie : 1 animal accueilli sur l'Ours, carte du Renard complétée</h2>
+  <div class="row" id="state"></div>
+  <p class="note">Illustrations : René Martin et collaborateurs, <i>Atlas de poche des mammifères de France, de la Suisse romane et de la Belgique</i>, Paris, Klincksieck, vers 1910 — domaine public, via Wikimedia Commons.</p>
+</main>
+<script src="rules.js"></script>
+<script src="draw.js"></script>
+<script src="cards.js"></script>
+<script>
+  const pick = n => H.CARDS.find(c => c.name === n).id;
+  const ids = ['Renard', 'Ours', 'Écureuil'].map(pick);
+  document.getElementById('small').innerHTML = ids.map(id => VCard.html(id, { width: 150 })).join('');
+  document.getElementById('big').innerHTML = ids.map(id => VCard.html(id, { width: 320 })).join('');
+  document.getElementById('state').innerHTML = VCard.html(pick('Ours'), { width: 240, placed: 1 }) + VCard.html(pick('Renard'), { width: 240, placed: 3 });
+</script>
+</body>
+</html>

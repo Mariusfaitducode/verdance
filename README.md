@@ -6,7 +6,7 @@
 
 ![Écran d'accueil de Verdance](docs/accueil.png)
 
-**[Jouer en ligne](https://mariusfaitducode.github.io/verdance/)** · [Voir la vidéo de démo](docs/demo.mp4)
+**[Jouer en ligne](https://mariusfaitducode.github.io/verdance/jouer.html)** · [Page du jeu](https://mariusfaitducode.github.io/verdance/)
 
 ## Le jeu
 
@@ -31,7 +31,7 @@ De 1 à 4 joueurs sur le même écran, en 20 à 30 minutes.
 
 ## Lancer le jeu
 
-Aucune installation. Ouvre `index.html` dans un navigateur récent, par double-clic ou via n'importe quel serveur statique :
+Aucune installation. Ouvre `jouer.html` (ou `index.html` pour la page d'accueil) dans un navigateur récent, par double-clic ou via n'importe quel serveur statique :
 
 ```sh
 python3 -m http.server 8000   # puis http://localhost:8000
@@ -60,5 +60,6 @@ Une connexion internet est nécessaire au premier chargement (Three.js et les po
 ## Crédits et licences
 
 - **Code** : licence [MIT](LICENSE).
+- **Peintures des cartes** : *Atlas de poche des mammifères de France, de la Suisse romane et de la Belgique* (René Martin et collaborateurs, Klincksieck, vers 1910), domaine public, via Wikimedia Commons. Détail dans [`assets/cards/CREDITS.md`](assets/cards/CREDITS.md).
 - **Modèles 3D d'animaux** : « Poly by Google » (CC-BY 3.0), « Gwym Hendawyr » (CC-BY 3.0) et « Хмара Сергей » (CC-BY 3.0) via [poly.pizza](https://poly.pizza), et [Quaternius](https://quaternius.com) (CC0). Textures redimensionnées, certains modèles réorientés ou teintés. Le détail fichier par fichier est dans [`assets/animals/CREDITS.md`](assets/animals/CREDITS.md). Ces modèles restent sous leur propre licence, pas sous MIT.
 - **Inspiration** : Verdance s'inspire des jeux de pose et de motifs, notamment *Harmonies* de Johan Benvenuto (Libellud). C'est un projet indépendant, sans lien avec Libellud et sans leur approbation. Les cartes et l'univers graphique sont originaux.

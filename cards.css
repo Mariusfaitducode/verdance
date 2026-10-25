@@ -1,0 +1,41 @@
+/* Verdance — cartes Animal : peintures anciennes, cadre moderne. Tout est en em : la carte suit --w. */
+.vcard{--w:150px;--hab:#4f9a3c;container-type:inline-size;position:relative;width:var(--w);aspect-ratio:63/88;font-size:calc(var(--w) / 15);border-radius:.8em;overflow:hidden;flex:none;
+  background:#fffdf8;font-family:Figtree,system-ui,sans-serif;color:#24211b;user-select:none;
+  box-shadow:0 0 0 .06em rgba(30,25,10,.12),0 .1em .2em rgba(30,25,10,.08),0 .8em 1.6em -.8em rgba(30,25,10,.45);transition:transform .2s ease,box-shadow .2s}
+.vc-art{position:absolute;left:.32em;right:.32em;top:.32em;height:72%;border-radius:.58em;overflow:hidden;background:#2b3a2e}
+.vc-art img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 42%;filter:saturate(1.12) contrast(1.06) brightness(1.06)}
+.vc-art::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 0 0 .06em rgba(255,255,255,.22);
+  background:linear-gradient(180deg,rgba(0,0,0,0) 58%,rgba(12,14,8,.62) 100%)}
+.vc-noart{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#d8ecee,#efe3c4)}
+.vc-noart svg{max-width:90%;max-height:90%}
+/* Nom posé sur la peinture, en bas à gauche */
+.vc-name{position:absolute;left:.62em;right:3.2em;bottom:.48em;z-index:1;font-family:Fraunces,Georgia,serif;font-weight:700;font-size:1.32em;line-height:1.02;
+  letter-spacing:-.01em;color:#fff;font-variation-settings:'SOFT' 100;text-shadow:0 .06em .3em rgba(0,0,0,.55)}
+/* Colonne des cubes, en verre dépoli : la 1re valeur est en bas */
+.vc-cubes{position:absolute;top:.72em;right:.66em;z-index:1;display:flex;flex-direction:column-reverse;gap:.22em;padding:.28em;border-radius:.72em;
+  background:rgba(255,253,246,.78);backdrop-filter:blur(.4em) saturate(1.3);-webkit-backdrop-filter:blur(.4em) saturate(1.3);
+  box-shadow:0 0 0 .05em rgba(255,255,255,.6) inset,0 .15em .5em rgba(0,0,0,.25)}
+.vc-slot{position:relative;width:1.62em;height:1.62em;border-radius:.42em;display:grid;place-items:center;background:rgba(36,33,27,.07);
+  font-weight:800;font-size:.9em;color:#5b5446;font-variant-numeric:tabular-nums}
+.vc-slot span{position:relative;z-index:1}
+.vc-cube{position:absolute;inset:0;border-radius:.42em;background:linear-gradient(160deg,#f6a957,#e07b22);box-shadow:inset 0 -.12em 0 rgba(140,60,0,.28)}
+.vc-slot:has(.vc-cube) span{color:#fff}
+.vc-slot.cur{background:#24614f;color:#fff}
+/* Bandeau : terrain d'accueil et motif */
+.vc-band{position:absolute;left:0;right:0;bottom:0;height:calc(28% - .32em);display:flex;align-items:center;gap:.4em;padding:0 .7em 0 .55em;box-sizing:border-box}
+.vc-hab{display:flex;flex-direction:column;align-items:center;gap:.05em;flex:none;width:3.2em}
+.vc-hab svg{width:2.1em;height:2.1em}
+.vc-hab span{font-size:.58em;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--hab)}
+.vc-pat{flex:1;min-width:0;height:100%;display:flex;align-items:center;justify-content:center;border-left:.06em solid rgba(36,33,27,.1);padding-left:.3em}
+.vc-pat svg{height:5.4em;width:auto;max-width:100%;overflow:visible;margin-top:-.9em}
+/* États dans le jeu */
+.vcard.ready{box-shadow:0 0 0 .16em #e2862b,0 .8em 1.6em -.6em rgba(226,134,43,.8)}
+.vcard.picked{box-shadow:0 0 0 .2em #24614f,0 .8em 1.6em -.6em rgba(36,97,79,.7);transform:translateY(-3px)}
+.vcard.can:hover{transform:translateY(-3px)}
+/* Petites cartes (jeu) : l'icône du terrain suffit, le motif prend la place */
+@container (max-width: 200px){
+  .vc-hab{width:2.3em}.vc-hab span{display:none}.vc-hab svg{width:2.3em;height:2.3em}
+  .vc-pat svg{height:6em;margin-top:-1.1em}
+  .vc-slot{font-size:1em}
+}

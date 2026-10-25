@@ -2,12 +2,15 @@
 (function () {
 'use strict';
 const SAVE_KEY = 'verdance-v2-save';
+const MODE = { embed: /[?&]embed/.test(location.search), demo: /[?&]demo/.test(location.search) };
+if (MODE.embed || MODE.demo) document.documentElement.classList.add(MODE.embed ? 'embed' : 'demo');
 const SQ3 = Math.sqrt(3);
 const hud = document.getElementById('hud');
 let S = null, history = [];
-const UI = { sel: 0, cubeCard: null, viewIdx: 0, overlay: null, toast: null, hoverK: null, hoverCard: null, handIds: [], names: ['Marius', 'Yasmine'], rules: false };
+const UI = { spirits: true, sel: 0, cubeCard: null, viewIdx: 0, overlay: null, toast: null, hoverK: null, hoverCard: null, handIds: [], names: ['Alice', 'Bob'], rules: false };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+UI.spirits = store.get('verdance-spirits', true);
 
 /* ================= Sons (synthétisés, aucun fichier) ================= */
 const Sound = {
@@ -37,75 +40,19 @@ const Sound = {
 };
 
 /* ================= Dessins iso (cartes, main, icônes) ================= */
-const TOP = { blue: '#3a8ec4', gray: '#a2a8b0', brown: '#93603b', green: '#62aa47', yellow: '#f1c044', red: '#d5533b' };
-const SIDE = { blue: '#276d9d', gray: '#787e86', brown: '#683f24', green: '#447f2e', yellow: '#c9961f', red: '#a3341f' };
-function isoStack(stack, cx, cy, r) {
-  const ry = r * .5, th = r * .42; let s = '';
-  const allGray = stack.length && stack.every(t => t === 'gray');
-  let yTop = cy;
-  stack.forEach((col, i) => {
-    const rr = allGray ? r * (1 - i * .11) : r, rry = rr * .5;
-    const yt = cy - i * th - th;
-    s += `<path d="M${cx - rr},${yt} L${cx - rr},${yt + th} A${rr},${rry} 0 0 0 ${cx + rr},${yt + th} L${cx + rr},${yt} Z" fill="${SIDE[col]}"/>`;
-    s += `<ellipse cx="${cx}" cy="${yt}" rx="${rr}" ry="${rry}" fill="${TOP[col]}"/>`;
-    s += `<ellipse cx="${cx - rr * .28}" cy="${yt - rry * .25}" rx="${rr * .42}" ry="${rry * .32}" fill="rgba(255,255,255,.22)"/>`;
-    yTop = yt;
-  });
-  const h = stack.length, top = stack[h - 1], w = 'rgba(255,255,255,.7)';
-  if (!h) return s;
-  if (top === 'green') {
-    const big = r * [.5, .72, .9][h - 1], lift = r * [.15, .55, .95][h - 1];
-    if (h > 1) s += `<rect x="${cx - r * .07}" y="${yTop - lift}" width="${r * .14}" height="${lift}" fill="#6e4426"/>`;
-    const cyc = yTop - lift - big * .55;
-    s += `<circle cx="${cx - big * .45}" cy="${cyc + big * .2}" r="${big * .55}" fill="#4c8c34"/><circle cx="${cx + big * .45}" cy="${cyc + big * .22}" r="${big * .5}" fill="#4c8c34"/>`;
-    s += `<circle cx="${cx}" cy="${cyc - big * .1}" r="${big * .7}" fill="#67b04a"/><circle cx="${cx - big * .25}" cy="${cyc - big * .32}" r="${big * .28}" fill="#8fcb63"/>`;
-  } else if (allGray) {
-    const pr = r * (1 - (h - 1) * .11) * .8, ph = r * (.55 + .32 * h);
-    s += `<path d="M${cx - pr},${yTop} L${cx - pr * .1},${yTop - ph} L${cx + pr},${yTop} Z" fill="#b4b9c0"/><path d="M${cx - pr * .1},${yTop - ph} L${cx + pr},${yTop} L${cx + pr * .2},${yTop} Z" fill="#8d939b"/>`;
-    if (h === 3) s += `<path d="M${cx - pr * .42},${yTop - ph * .58} L${cx - pr * .1},${yTop - ph} L${cx + pr * .3},${yTop - ph * .6} L${cx + pr * .05},${yTop - ph * .52} Z" fill="#fff"/>`;
-  } else if (top === 'red' && h === 2) {
-    const ww = r * .9, wh = r * .55;
-    s += `<rect x="${cx - ww / 2}" y="${yTop - wh}" width="${ww}" height="${wh}" fill="#f1dcc0"/><rect x="${cx - ww * .1}" y="${yTop - wh * .6}" width="${ww * .22}" height="${wh * .6}" fill="#5a3a22"/><rect x="${cx + ww * .2}" y="${yTop - wh * .8}" width="${ww * .16}" height="${ww * .16}" fill="#ffd36e"/>`;
-    s += `<path d="M${cx - ww * .62},${yTop - wh} L${cx},${yTop - wh - r * .55} L${cx + ww * .62},${yTop - wh} Z" fill="#b5402c"/>`;
-  } else if (top === 'yellow') {
-    for (const dx of [-.4, -.13, .14, .4]) s += `<path d="M${cx + dx * r},${yTop + ry * .2} l0,-${r * .55} M${cx + dx * r},${yTop - r * .32} l-${r * .1},-${r * .1} M${cx + dx * r},${yTop - r * .32} l${r * .1},-${r * .1}" stroke="#a87a10" stroke-width="${r * .07}" stroke-linecap="round" fill="none"/>`;
-  } else if (top === 'blue') {
-    s += `<path d="M${cx - r * .55},${yTop} q${r * .27},-${ry * .4} ${r * .55},0 t${r * .55},0" stroke="${w}" stroke-width="${r * .08}" fill="none" stroke-linecap="round"/>`;
-  } else if (top === 'brown') {
-    s += `<ellipse cx="${cx}" cy="${yTop}" rx="${r * .55}" ry="${ry * .55}" fill="none" stroke="rgba(255,230,200,.45)" stroke-width="${r * .06}"/><ellipse cx="${cx}" cy="${yTop}" rx="${r * .25}" ry="${ry * .25}" fill="none" stroke="rgba(255,230,200,.45)" stroke-width="${r * .06}"/>`;
-  }
-  return s;
-}
-const stackTopY = (stack, cy, r) => cy - stack.length * r * .42;
-function cubeSvg(cx, cy, s) { return `<g transform="translate(${cx},${cy})"><path d="M0,${-s} L${s * .9},${-s * .5} L0,0 L${-s * .9},${-s * .5}Z" fill="#f8b467"/><path d="M${-s * .9},${-s * .5} L0,0 L0,${s} L${-s * .9},${s * .5}Z" fill="#e0812a"/><path d="M${s * .9},${-s * .5} L0,0 L0,${s} L${s * .9},${s * .5}Z" fill="#bb6518"/></g>`; }
-function tokenIcon(stack, size = 64) {
-  const r = size * .3, cy = size * .72 + (stack.length - 1) * r * .2;
-  return `<svg viewBox="0 0 ${size} ${size}" aria-hidden="true">${isoStack(stack, size / 2, cy, r)}</svg>`;
-}
-function hexIso(cx, cy, R, k = .58) { let p = []; for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i; p.push((cx + R * Math.cos(a)).toFixed(1) + ',' + (cy + R * Math.sin(a) * k).toFixed(1)); } return p.join(' '); }
-function patternSvg(card) {
-  const R = 17, K = .58;
-  const pts = card.cells.map(([req, q, r], i) => ({ req, i, x: 1.5 * R * q, y: SQ3 * R * (r + q / 2) * K }));
-  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
-  const minx = Math.min(...xs) - R * 1.1, maxx = Math.max(...xs) + R * 1.1, miny = Math.min(...ys) - R * 2.1, maxy = Math.max(...ys) + R * .75;
-  let s = '';
-  for (const p of [...pts].sort((a, b) => a.y - b.y)) s += `<polygon points="${hexIso(p.x, p.y, R * .96, K)}" fill="${p.i === 0 ? '#ffe9c7' : 'rgba(255,250,238,.9)'}" stroke="${p.i === 0 ? '#e2862b' : 'rgba(120,98,60,.28)'}" stroke-width="${p.i === 0 ? 2 : 1}"/>`;
-  for (const p of [...pts].sort((a, b) => a.y - b.y)) {
-    const st = H.REQ[p.req].stack; s += isoStack(st, p.x, p.y + R * .18, R * .55);
-    if (p.i === 0) s += cubeSvg(p.x + R * .55, stackTopY(st, p.y, R * .55) - R * .25, R * .26);
-  }
-  return `<svg viewBox="${minx} ${miny} ${maxx - minx} ${maxy - miny}" width="${(maxx - minx) * 1.25}" aria-hidden="true">${s}</svg>`;
-}
+const { isoStack, stackTopY, cubeSvg, tokenIcon, hexIso, patternSvg } = window.Draw;
 const CAT_ICON = {
   trees: tokenIcon(['brown', 'green'], 44), mountains: tokenIcon(['gray', 'gray'], 44), fields: tokenIcon(['yellow'], 44),
   buildings: tokenIcon(['brown', 'red'], 44), water: tokenIcon(['blue'], 44),
   animals: `<svg viewBox="0 0 44 44">${cubeSvg(22, 24, 11)}</svg>`,
+  spirit: '<svg viewBox="0 0 44 44"><defs><radialGradient id="spg"><stop offset="0" stop-color="#fffbe8"/><stop offset=".45" stop-color="#ffd36a"/><stop offset="1" stop-color="#ffd36a" stop-opacity="0"/></radialGradient></defs><circle cx="22" cy="22" r="18" fill="url(#spg)"/><circle cx="22" cy="22" r="6" fill="#fff6d0"/></svg>',
 };
 const I = {
   top: '<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>',
   tokens: '<ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v4c0 1.7 3.1 3 7 3s7-1.3 7-3V7M5 11v4c0 1.7 3.1 3 7 3s7-1.3 7-3v-4"/>',
   center: '<circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
   all: '<rect x="2.5" y="8" width="8" height="9" rx="2.5"/><rect x="13.5" y="6" width="8" height="9" rx="2.5"/>',
+  music: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
   sound: '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 9a4 4 0 010 6M19 6.5a8 8 0 010 11"/>',
   mute: '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>',
   book: '<path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5"/>',
@@ -136,8 +83,8 @@ function demoState() {
 }
 
 /* ================= Actions ================= */
-function startGame(names) {
-  S = H.newState(names); history = []; UI.sel = 0; UI.cubeCard = null; UI.viewIdx = 0; UI.handIds = [];
+function startGame(names, opts = { spirits: UI.spirits }) {
+  S = H.newState(names, opts); history = []; UI.sel = 0; UI.cubeCard = null; UI.viewIdx = 0; UI.handIds = [];
   store.del(SAVE_KEY);
   if (window.Scene && Scene.ready) { Scene.reset(); Scene.autoRotate(false); }
   showTurn(); save();
@@ -223,7 +170,13 @@ function onHover(h, x, y) {
 }
 
 /* ================= Rendu ================= */
+function updateAmbience() {
+  if (!window.Snd) return; const p = S ? viewing() : demoState().players[0]; const b = p.board, n = { water: 0, forest: 0, mountain: 0, field: 0 }, names = [];
+  for (const k in b) { const s = b[k].stack, t = s[s.length - 1]; if (t === 'blue') n.water++; else if (t === 'green') n.forest++; else if (s.length && s.every(x => x === 'gray')) n.mountain++; else if (t === 'yellow') n.field++; if (b[k].cube && H.CARDS[b[k].cube.card]) names.push(H.CARDS[b[k].cube.card].name); }
+  Snd.setAmbience({ water: n.water / 5, forest: n.forest / 5, mountain: n.mountain / 4, field: n.field / 4 }); Snd.setAnimals(names);
+}
 function syncScene(animate = true) {
+  updateAmbience();
   if (!window.Scene || !Scene.ready) return;
   if (!S) { Scene.sync(demoState(), { activeIdx: -1, animate: false }); return; }
   const v = { activeIdx: isMyView() && !UI.overlay ? S.current : -1, legal: [], targets: [], patternHi: [], ghostColor: null, animate };
@@ -243,25 +196,40 @@ function syncScene(animate = true) {
   Scene.sync(S, v);
 }
 
+const PORT = {};
+function portraitHtml(spec, fallback) {
+  if (PORT[spec.key]) return `<img class="portrait" src="${PORT[spec.key]}" alt="">`;
+  if (window.Scene && Scene.ready && Scene.portrait) Scene.portrait(spec).then(url => {
+    if (!url) return; PORT[spec.key] = url;
+    document.querySelectorAll(`[data-portrait="${spec.key}"]`).forEach(el => { el.innerHTML = `<img class="portrait fadein" src="${url}" alt="">`; });
+  });
+  return fallback;
+}
+const reqIcons = cells => cells.map(([req], i) => `<span class="rq${i === 0 ? ' tg' : ''}" title="${H.REQ[req].label}">${tokenIcon(req === 'B' ? ['brown', 'red'] : H.REQ[req].stack, 30)}</span>`).join('');
+function spiritHtml(id, { pick = null, owner = null, hidden = false } = {}) {
+  const sp = H.SPIRITS[id];
+  if (hidden) return `<div class="card spirit back"><div class="art"><span class="sigil"></span></div><div class="body"><div class="nm">Esprit secret</div><p class="stext">Révélé en fin de partie</p></div></div>`;
+  const spec = { key: 'spirit-' + id, cells: sp.cells, wisp: { blue: '#7fd3ff', gray: '#d9e3f0', yellow: '#ffd36a', green: '#9cf07a', red: '#ffab7a', brown: '#ffe2a0', orange: '#ffb35c' }[sp.color] };
+  const pts = owner ? sp.score(owner) : null;
+  return `<div class="card spirit" style="--c:var(--${sp.color === 'orange' ? 'cube' : sp.color})"><div class="art" data-portrait="${spec.key}">${portraitHtml(spec, '<span class="sigil"></span>')}</div>
+    <div class="body"><div class="nm">${esc(sp.name)}</div><p class="stext">${esc(sp.text)}</p>${pts !== null ? `<div class="spts">${pts} pts pour l'instant</div>` : ''}
+    ${pick !== null ? `<button class="cbtn gold" data-act="spirit" data-i="${pick}">Choisir cet esprit</button>` : ''}</div></div>`;
+}
 function cardHtml(c, { mode, idx }) {
-  const card = H.CARDS[c.id], placed = c.placed || 0;
-  const track = card.pts.map((v, i) => `<i class="${i >= placed ? 'cube' : ''}${i === placed - 1 ? ' cur' : ''}">${v}</i>`).join('');
-  let cls = 'card', btn = '';
+  const placed = c.placed || 0; let cls = '', btn = '';
   if (mode === 'market') {
     const ok = isMyView() && !S.tookCard && me().cards.length < 4 && !UI.overlay;
     if (ok) cls += ' can';
     const why = !isMyView() ? '' : S.tookCard ? 'Déjà adopté' : me().cards.length >= 4 ? '4 cartes max' : 'Adopter';
     btn = `<button class="cbtn" data-act="take" data-i="${idx}" ${ok ? '' : 'disabled'}>${why || 'Adopter'}</button>`;
   } else if (mode === 'mine') {
-    const mine = isMyView();
-    const ready = mine && H.cardTargets(me().board, c.id).length > 0;
+    const mine = isMyView(), ready = mine && H.cardTargets(me().board, c.id).length > 0;
     if (ready) cls += ' ready';
     if (mine && UI.cubeCard === idx) cls += ' picked';
     btn = ready ? `<button class="cbtn warm" data-act="cubemode" data-i="${idx}">${UI.cubeCard === idx ? 'Annuler' : 'Accueillir'}</button>` : '';
   }
-  return `<div class="${cls}" style="--c:var(--${card.color})" data-flip="card-${c.id}" ${mode === 'mine' ? `data-hovercard="${idx}"` : ''}>
-    <span class="band"></span><div class="art">${patternSvg(card)}</div>
-    <div class="body"><div class="nm">${esc(card.name)}</div><div class="track">${track}</div>${btn}</div></div>`;
+  const narrow = window.innerWidth <= 1180, width = Math.floor(((mode === 'market' ? (narrow ? 280 : 316) : (narrow ? 260 : 300)) - 41) / 2);
+  return `<div class="cardwrap" data-flip="card-${c.id}" ${mode === 'mine' ? `data-hovercard="${idx}"` : ''}>${VCard.html(c.id, { width, placed, cls })}${btn}</div>`;
 }
 function nestHtml(sl, i) {
   const can = isMyView() && !S.tookSlot && sl.length && !UI.overlay;
@@ -272,7 +240,7 @@ function nestHtml(sl, i) {
 function scoreHtml(p) {
   const sc = H.score(p), lr = H.longestRiver(p.board).length;
   const row = (key, lbl, extra = '') => `<div class="srow">${CAT_ICON[key]}<span>${lbl}${extra}</span><b>${sc[key]}</b></div>`;
-  return `<div class="score">${row('trees', 'Arbres')}${row('mountains', 'Montagnes')}${row('fields', 'Champs')}${row('buildings', 'Bâtiments')}${row('water', 'Rivière', lr ? `<small>${lr} jeton${lr > 1 ? 's' : ''}</small>` : '')}${row('animals', 'Animaux')}</div>
+  return `<div class="score">${row('trees', 'Arbres')}${row('mountains', 'Montagnes')}${row('fields', 'Champs')}${row('buildings', 'Bâtiments')}${row('water', 'Rivière', lr ? `<small>${lr} jeton${lr > 1 ? 's' : ''}</small>` : '')}${row('animals', 'Animaux')}${p.spirit != null ? row('spirit', 'Esprit') : ''}</div>
     <div class="stotal"><span>Total</span><b>${sc.total}</b></div>`;
 }
 function dockHtml() {
@@ -293,25 +261,26 @@ function dockHtml() {
   return `<div class="dock panel">
     <div class="hand">${slots}</div>
     <div class="msg"><div class="steps">${steps}</div>${msg}</div>
-    <div class="dbtns"><button class="btn ghost sqbtn" data-act="undo" title="Annuler (Ctrl+Z)" ${history.length && isMyView() ? '' : 'disabled'}>${icon('undo')}</button>
+    <div class="dbtns">${S.endTriggered && !S.freePlay && isMyView() ? '<button class="btn ghost small-btn" data-act="continue" title="Ignorer la fin et jouer jusqu\'à vider le sac">Ignorer la fin</button>' : ''}<button class="btn ghost sqbtn" data-act="undo" title="Annuler (Ctrl+Z)" ${history.length && isMyView() ? '' : 'disabled'}>${icon('undo')}</button>
     <button class="btn ${H.canEndTurn(S) && isMyView() ? 'pulse' : ''}" data-act="end" ${H.canEndTurn(S) && isMyView() ? '' : 'disabled'}>Terminer le tour</button></div></div>`;
 }
 function topHtml(intro) {
   const players = S ? S.players.map((p, i) => `<button class="pchip ${i === S.current && !S.over ? 'on' : ''} ${i === UI.viewIdx && i !== S.current ? 'viewing' : ''}" style="--pc:${p.color}" data-act="view" data-i="${i}" title="Voir le paysage de ${esc(p.name)}">
       <span class="av">${esc((p.name[0] || '?').toUpperCase())}</span><span><div class="nm">${esc(p.name)}</div>${i === S.current && !S.over ? '<div class="turnlbl">joue</div>' : ''}</span><span class="sc">${H.score(p).total}</span></button>`).join('') : '';
   return `<div class="top"><div class="brand" style="${intro ? 'visibility:hidden' : ''}">Verdance</div><div class="players">${players}</div>
-    <div class="tools">${S ? `<div class="meta"><span>Sac <b>${S.bag.length}</b></span><span>Pioche <b>${S.deck.length}</b></span></div>
+    <div class="tools">${S ? `<div class="meta"><span>Sac <b>${S.bag.length}</b></span><span>Pioche <b>${S.deck.length}</b></span>${S.freePlay && !S.over ? '<span class="freebadge">Partie libre</span><button class="btn ghost small-btn" data-act="finish">Terminer</button>' : ''}</div>
       <button class="ibtn" data-act="topview" title="Vue de dessus (T)">${icon('top')}</button>
       <button class="ibtn ${UI.tokens ? 'on' : ''}" data-act="tokens" title="Afficher les jetons (J)">${icon('tokens')}</button>
       <button class="ibtn" data-act="recenter" title="Recentrer">${icon('center')}</button>
       ${S.players.length > 1 ? `<button class="ibtn" data-act="overview" title="Tous les paysages">${icon('all')}</button>` : ''}` : ''}
-      <button class="ibtn" data-act="sound" title="Son">${icon(Sound.on ? 'sound' : 'mute')}</button>
+      <button class="ibtn ${Snd.musicOn ? '' : 'off'}" data-act="music" title="Musique">${icon('music')}</button>
+      <button class="ibtn" data-act="sound" title="Sons et nature">${icon(Sound.on ? 'sound' : 'mute')}</button>
       <button class="ibtn" data-act="rules" title="Règles">${icon('book')}</button>
       ${S ? `<button class="ibtn" data-act="quit" title="Accueil">${icon('quit')}</button>` : ''}</div></div>`;
 }
 function gameHtml() {
   const v = viewing(), mine = isMyView();
-  if (S.over) { const w = H.ranking(S)[0]; return topHtml() + `<div class="endbar panel"><span>${esc(w.p.name)} l'emporte avec ${w.sc.total} points</span><button class="btn ghost" data-act="results">Résultats</button><button class="btn" data-act="rematch">Revanche</button><button class="btn ghost" data-act="quit">Accueil</button></div>`; }
+  if (S.over) { const w = H.ranking(S)[0]; return topHtml() + `<div class="endbar panel"><span>${esc(w.p.name)} l'emporte avec ${w.sc.total} points</span><button class="btn ghost" data-act="results">Résultats</button>${H.tokensLeft(S) ? '<button class="btn warm" data-act="continue">Continuer</button>' : ''}<button class="btn" data-act="rematch">Revanche</button><button class="btn ghost" data-act="quit">Accueil</button></div>`; }
   return topHtml() + `
   <div class="left">
     <section class="panel"><div class="ptitle"><h2>Plateau central</h2><small>${S.tookSlot ? 'jetons pris' : 'prends 3 jetons'}</small></div>
@@ -321,6 +290,7 @@ function gameHtml() {
   </div>
   <div class="right">
     <section class="panel" style="--pc:${v.color}"><div class="ptitle"><h2 style="color:${v.color}">${esc(v.name)}</h2><small>${H.emptyCells(v)} cases libres</small></div>${scoreHtml(v)}</section>
+    ${v.spirit != null || v.spiritChoice ? `<section class="panel"><div class="ptitle"><h2>Esprit du paysage</h2><small>objectif secret</small></div>${v.spirit == null ? '<div class="empty-slot" style="min-height:70px">À choisir au début du tour</div>' : (UI.viewIdx === S.current ? spiritHtml(v.spirit, { owner: v }) : spiritHtml(v.spirit, { hidden: true }))}</section>` : ''}
     <section class="panel"><div class="ptitle"><h2>Animaux</h2><small>${v.cards.length}/4 en cours</small></div>
       <div class="mine">${[0, 1, 2, 3].map(i => v.cards[i] ? cardHtml(v.cards[i], { mode: 'mine', idx: i }) : '<div class="empty-slot">Emplacement libre</div>').join('')}</div>
       ${v.done.length ? `<div class="done">${v.done.map(c => `<span>${esc(H.CARDS[c.id].name)} <b>${H.CARDS[c.id].pts[c.placed - 1]}</b></span>`).join('')}</div>` : ''}</section>
@@ -335,17 +305,20 @@ function introHtml() {
     <p class="lead">Faites pousser des forêts, élevez des montagnes, tracez des rivières. Puis invitez les animaux qui ne vivent que dans ces habitats-là.</p>
     <div class="pl-list">${UI.names.map((n, i) => `<div class="pl" style="--pc:${H.PLAYER_COLORS[i]}"><span class="av"></span><input value="${esc(n)}" maxlength="16" data-name="${i}" aria-label="Joueur ${i + 1}">${UI.names.length > 1 ? `<button data-act="rmp" data-i="${i}" title="Retirer">${icon('x')}</button>` : ''}</div>`).join('')}</div>
     ${UI.names.length < 4 ? '<button class="linkbtn" data-act="addp">+ Ajouter un joueur</button>' : ''}
+    <button class="opt ${UI.spirits ? 'on' : ''}" data-act="togglespirits"><span class="tick"></span><span><b>Esprits du paysage</b><small>un objectif secret par joueur, choisi parmi deux</small></span></button>
     <div class="row" style="margin-top:22px"><button class="btn" data-act="start" style="padding:14px 24px;font-size:1.02rem">Commencer la partie</button>
     ${saved && saved.S ? '<button class="btn warm" data-act="resume">Reprendre</button>' : ''}<button class="btn ghost" data-act="rules">Règles</button></div>
   </div></div>`;
 }
 function turnHtml() {
   const p = me();
-  return `<div class="turn" data-act="closeturn" style="--pc:${p.color}"><div class="turn-card">
+  const mustPick = p.spirit == null && p.spiritChoice;
+  return `<div class="turn" ${mustPick ? '' : 'data-act="closeturn"'} style="--pc:${p.color}"><div class="turn-card">
     <div class="eyebrow">Tour ${p.turns + 1}${S.endTriggered ? ' · dernier tour' : ''}</div>
     <h1 class="display">À toi, ${esc(p.name)}</h1>
-    <p>${S.endTriggered ? 'La fin est déclenchée : c\'est le dernier tour de table.' : 'Ton paysage t\'attend.'}</p>
-    <button class="btn" data-act="closeturn" style="padding:14px 28px">Jouer</button></div></div>`;
+    ${p.spirit == null && p.spiritChoice ? `<p>Choisis d'abord ton <b>Esprit du paysage</b> : un objectif secret qui rapporte des points en fin de partie.</p><div class="spirit-pick" data-stop="1">${p.spiritChoice.map((id, j) => spiritHtml(id, { pick: j })).join('')}</div>` : `
+    <p>${S.freePlay ? 'Partie libre : on joue jusqu\'à vider le sac.' : S.endTriggered ? 'La fin est déclenchée : c\'est le dernier tour de table.' : 'Ton paysage t\'attend.'}</p>
+    <div class="row" style="justify-content:center"><button class="btn" data-act="closeturn" style="padding:14px 28px">Jouer</button>${S.endTriggered && !S.freePlay ? '<button class="btn ghost" data-act="continue" title="La partie ne s\'arrêtera qu\'une fois le sac vide">Ignorer la fin</button>' : ''}</div>`}</div></div>`;
 }
 function endHtml() {
   const rows = S.players.map((p, i) => ({ p, i, sc: H.score(p), cubes: H.cubesPlaced(p) }));
@@ -358,9 +331,11 @@ function endHtml() {
     ${line('trees', 'Arbres')}${line('mountains', 'Montagnes')}${line('fields', 'Champs')}${line('buildings', 'Bâtiments')}${line('water', 'Rivière')}
     <tr class="sub"><td>Paysages</td>${rows.map(r => `<td>${r.sc.landscape}</td>`).join('')}</tr>
     ${line('animals', 'Animaux')}
+    ${S.spirits ? `<tr><td class="lbl">${CAT_ICON.spirit}Esprit</td>${rows.map(r => `<td title="${r.p.spirit != null ? esc(H.SPIRITS[r.p.spirit].name) : ''}">${r.sc.spirit}</td>`).join('')}</tr>` : ''}
     <tr><td>Cubes posés</td>${rows.map(r => `<td>${r.cubes}</td>`).join('')}</tr>
     <tr class="tot"><td>Total</td>${rows.map(r => `<td class="${r.i === w.i && !tie ? 'win' : ''}" data-count="${r.sc.total}">0</td>`).join('')}</tr></table>
-    <div class="row"><button class="btn" data-act="rematch">Revanche</button><button class="btn ghost" data-act="closeend">Admirer les paysages</button><button class="btn ghost" data-act="quit">Accueil</button></div>
+    ${S.spirits ? `<p class="spirit-reveal">${rows.map(r => `<b style="color:${r.p.color}">${esc(r.p.name)}</b> : ${r.p.spirit != null ? esc(H.SPIRITS[r.p.spirit].name) : 'aucun esprit'}`).join(' · ')}</p>` : ''}
+    <div class="row">${H.tokensLeft(S) ? '<button class="btn warm" data-act="continue" title="Ignorer la fin et jouer jusqu\'à vider le sac">Continuer la partie</button>' : ''}<button class="btn" data-act="rematch">Revanche</button><button class="btn ghost" data-act="closeend">Admirer les paysages</button><button class="btn ghost" data-act="quit">Accueil</button></div>
   </div></div>`;
 }
 function rulesHtml() {
@@ -379,17 +354,20 @@ function rulesHtml() {
     ${rc(['blue'], 'Rivière', 'La plus longue : 0, 2, 5, 8, 11, 15, puis +4 par jeton')}
     <div class="rcell"><svg viewBox="0 0 44 44" width="46" height="46">${cubeSvg(22, 24, 11)}</svg><div><b>Animaux</b>La dernière valeur découverte de chaque carte</div></div></div>
     <h3>Fin de partie</h3><ul><li>Quand le sac ne suffit plus pour remplir le plateau central, ou qu'un joueur finit son tour avec 2 cases libres ou moins. On termine le tour de table : chacun aura joué autant de tours.</li></ul>
+    <h3>Esprits du paysage</h3><ul><li>En option : au premier tour, chacun choisit un Esprit parmi deux. C'est un objectif secret, comme « 6 pts par montagne de 3 jetons », compté en fin de partie.</li></ul>
+    <h3>Partie libre</h3><ul><li>Quand la fin est déclenchée, ou une fois la partie terminée, « Continuer » permet d'ignorer la fin : vous jouez jusqu'à vider le sac, puis « Terminer » affiche les scores.</li></ul>
     <h3>Crédits</h3><ul><li>Verdance est un projet indépendant et open source, inspiré des jeux de pose et de motifs comme <i>Harmonies</i> (Libellud). Il n'est ni affilié à Libellud ni approuvé par eux.</li>
+    <li>Peintures des cartes : <i>Atlas de poche des mammifères de France</i> (René Martin et collaborateurs, Klincksieck, vers 1910), domaine public, via Wikimedia Commons.</li>
     <li>Modèles 3D d'animaux : « Poly by Google » (CC-BY 3.0), « Gwym Hendawyr » (CC-BY 3.0) et « Хмара Сергей » (CC-BY 3.0), via poly.pizza ; Quaternius (CC0). Textures redimensionnées, certains modèles réorientés ou teintés.</li></ul>
     <h3>Raccourcis</h3><ul><li><b>1 2 3</b> choisir un jeton · <b>T</b> vue de dessus · <b>J</b> afficher les jetons · <b>Ctrl+Z</b> annuler · <b>Entrée</b> terminer le tour · glisser pour tourner, molette pour zoomer.</li></ul>
   </div></div>`;
 }
 
-function frame() { if (Scene.ready) Scene.setFraming(S ? { x: 0, y: 46, dist: 1 } : { x: window.innerWidth > 900 ? 0.17 : 0, y: 0, dist: 1.18 }); }
+function frame() { if (Scene.ready) Scene.setFraming(MODE.embed ? { x: 0, y: 0, dist: 1.12 } : S ? { x: 0, y: 46, dist: 1 } : { x: window.innerWidth > 900 ? 0.17 : 0, y: 0, dist: 1.18 }); }
 function render({ animate = true } = {}) {
   frame();
   const prev = new Map(); document.querySelectorAll('[data-flip]').forEach(el => prev.set(el.dataset.flip, el.getBoundingClientRect()));
-  let html = S ? gameHtml() : introHtml();
+  let html = MODE.embed ? '' : S ? gameHtml() : introHtml();
   if (S && UI.overlay === 'turn') html += turnHtml();
   if (S && UI.overlay === 'end') html += endHtml();
   if (UI.rules) html += rulesHtml();
@@ -416,7 +394,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-stop]') && !e.target.closest('[data-act]')) return;
   const el = e.target.closest('[data-act]'); if (!el) return;
   const act = el.dataset.act, i = +el.dataset.i;
-  Sound.ac();
+  Sound.ac(); Snd.start();
   switch (act) {
     case 'start': readNames(); startGame(UI.names.map((n, j) => n.trim() || 'Joueur ' + (j + 1))); break;
     case 'resume': { const d = store.get(SAVE_KEY, null); if (d && d.S) { S = d.S; history = d.history || []; UI.handIds = []; if (Scene.ready) { Scene.reset(); Scene.autoRotate(false); } showTurn(); } break; }
@@ -428,7 +406,11 @@ document.addEventListener('click', e => {
     case 'closeend': UI.overlay = null; render({ animate: false }); break;
     case 'results': UI.overlay = 'end'; render({ animate: false }); startCountUp(); break;
     case 'quit': S = null; UI.overlay = null; if (Scene.ready) { Scene.reset(); Scene.autoRotate(true); } render({ animate: false }); if (Scene.ready) Scene.focus(0, { keepAngle: false }); break;
-    case 'rematch': startGame(S.players.map(p => p.name)); break;
+    case 'rematch': startGame(S.players.map(p => p.name), { spirits: S.spirits }); break;
+    case 'spirit': H.chooseSpirit(S, S.current, i); save(); Sound.chime(); render({ animate: false }); break;
+    case 'togglespirits': UI.spirits = !UI.spirits; store.set('verdance-spirits', UI.spirits); readNames(); render({ animate: false }); break;
+    case 'continue': if (H.continueGame(S)) { const wasOver = UI.overlay === 'end' || document.querySelector('.endbar'); Scene.autoRotate(false); toast('Partie libre : la fin est ignorée, vous jouez jusqu\'à vider le sac'); if (wasOver) showTurn(); else render({ animate: false }); save(); } break;
+    case 'finish': H.finishNow(S); store.del(SAVE_KEY); UI.overlay = 'end'; render({ animate: false }); if (Scene.ready) { Scene.overview(); Scene.autoRotate(true); } Sound.chime(); startCountUp(); break;
     case 'slot': takeSlot(i); break;
     case 'sel': UI.sel = i; UI.cubeCard = null; Sound.pick(); render(); break;
     case 'take': takeCard(i); break;
@@ -440,7 +422,8 @@ document.addEventListener('click', e => {
     case 'recenter': Scene.resetView(S ? UI.viewIdx : 0); break;
     case 'overview': Scene.overview(); break;
     case 'tokens': UI.tokens = !UI.tokens; Scene.setShowTokens(UI.tokens); render({ animate: false }); break;
-    case 'sound': Sound.on = !Sound.on; store.set('verdance-sound', Sound.on); render({ animate: false }); break;
+    case 'sound': Sound.on = !Sound.on; store.set('verdance-sound', Sound.on); if (Snd.natureOn !== Sound.on) Snd.toggleNature(); render({ animate: false }); break;
+    case 'music': Snd.toggleMusic(); render({ animate: false }); break;
   }
 });
 function readNames() { document.querySelectorAll('[data-name]').forEach(inp => { UI.names[+inp.dataset.name] = inp.value; }); }
@@ -453,7 +436,7 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Enter' && !S) { readNames(); startGame(UI.names.map((n, j) => n.trim() || 'Joueur ' + (j + 1))); } return; }
   if (e.key === 'Escape') { if (UI.rules) { UI.rules = false; render({ animate: false }); } else if (UI.cubeCard !== null) { UI.cubeCard = null; render(); } return; }
   if (!S) return;
-  if (UI.overlay === 'turn' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); UI.overlay = null; render({ animate: false }); return; }
+  if (UI.overlay === 'turn' && (e.key === 'Enter' || e.key === ' ') && !(me().spirit == null && me().spiritChoice)) { e.preventDefault(); UI.overlay = null; render({ animate: false }); return; }
   if (UI.overlay) return;
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
   else if (['1', '2', '3'].includes(e.key) && S.hand[+e.key - 1]) { UI.sel = +e.key - 1; UI.cubeCard = null; Sound.pick(); render(); }
@@ -466,13 +449,115 @@ document.addEventListener('keydown', e => {
 render({ animate: false });
 Scene.onLand = color => Sound.clack({ gray: .8, brown: .9, red: 1.05, green: 1.1, yellow: 1.2, blue: .7 }[color] || 1);
 Scene.init(document.getElementById('stage'), {
-  onReady() { frame(); syncScene(false); Scene.focus(0, { instant: true, keepAngle: false }); if (!S) Scene.autoRotate(true); },
+  onReady() { frame(); render({ animate: false }); Scene.focus(0, { instant: true, keepAngle: false }); if (!S) Scene.autoRotate(true); },
   onError() { document.body.insertAdjacentHTML('beforeend', '<div class="fallback"><div><h1 class="display" style="font-size:3rem">Verdance</h1><p>La 3D n\'a pas pu se charger (connexion internet requise la première fois).</p><p><a href="prototype-v1.html">Jouer à la version 2D</a></p></div></div>'); },
   onHover,
+  onAnimalHover(name) { Snd.cry(name, .8); },
+  onAnimalArrive(name) { setTimeout(() => Snd.cry(name), 450); },
   onCellClick(pi, k) {
     if (!S || UI.overlay || pi !== S.current || !isMyView()) return;
     if (UI.cubeCard !== null) placeCube(k); else if (S.hand.length) placeToken(k);
   },
 });
+/* ================= Mode démo : une île construite du début à la fin, pour filmer ================= */
+const DEMO_TXT = {
+  fr: [['Jouez à plusieurs, sur ordinateur et sur téléphone', ''], ['Gratuit et open source', 'Le code est sur GitHub, sous licence MIT']],
+  en: [['Play with friends, on desktop and mobile', ''], ['Free and open source', 'The code is on GitHub, under the MIT license']],
+};
+async function runDemo() {
+  const W = ms => new Promise(r => setTimeout(r, ms));
+  const lang = /lang=en/.test(location.search) ? 'en' : 'fr';
+  UI.names = ['Alice', 'Bob']; render({ animate: false }); // prénoms neutres pour la vidéo
+  while (!Scene.ready) await W(100);
+  if (!/autostart/.test(location.search)) await new Promise(res => { const o = document.createElement('div'); o.className = 'demo-start'; o.innerHTML = '<div><b>Cliquer pour lancer la démo</b><span>Lance l\'enregistrement de l\'écran avant de cliquer</span></div>'; o.onclick = () => { o.remove(); res(); }; document.body.appendChild(o); });
+  Snd.start();
+  // curseur visible : il va là où l'action a lieu
+  const cur = document.createElement('div'); cur.className = 'demo-cursor'; cur.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 2l15 10-6.5 1.5L16 21l-3 1.2-3.4-7.6L4 19z" fill="#fff" stroke="#1d2a24" stroke-width="1.6" stroke-linejoin="round"/></svg>'; document.body.appendChild(cur);
+  let cx = innerWidth * .5, cy = innerHeight * .7; cur.style.transform = `translate(${cx}px,${cy}px)`;
+  const moveTo = async (x, y, ms) => { cur.animate([{ transform: `translate(${cx}px,${cy}px)` }, { transform: `translate(${x}px,${y}px)` }], { duration: ms, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'forwards' }); cx = x; cy = y; await W(ms); };
+  const tap = async () => { const r = document.createElement('div'); r.className = 'demo-tap'; r.style.left = cx + 'px'; r.style.top = cy + 'px'; document.body.appendChild(r); setTimeout(() => r.remove(), 550); await W(90); };
+  const center = sel => { const el = document.querySelector(sel); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  const at = async (sel, ms = 260) => { const c = center(sel); if (c) { await moveTo(c[0], c[1], ms); await tap(); } };
+  const cell = async (pi, k, ms = 210) => { const p = Scene.screenPos(pi, k); if (p) { await moveTo(p.x, p.y + 26, ms); await tap(); } };
+  const id = n => H.CARDS.find(c => c.name === n).id;
+  const tagEl = document.createElement('div'); tagEl.className = 'demo-tag'; document.body.appendChild(tagEl);
+  const tag = p => { tagEl.innerHTML = `<span style="background:${p.color}">${esc(p.name[0])}</span>${esc(p.name)}`; tagEl.style.setProperty('--pc', p.color); tagEl.classList.remove('show'); void tagEl.offsetWidth; tagEl.classList.add('show'); };
+  const capEl = document.createElement('div'); capEl.className = 'demo-caption'; document.body.appendChild(capEl);
+  const caption = txt => { capEl.textContent = txt || ''; capEl.classList.toggle('show', !!txt); };
+
+  // 1. l'accueil, très vite
+  await W(1100); await at('[data-act="start"]', 500); await W(120);
+  startGame(['Alice', 'Bob'], { spirits: false });
+  S.market = ['Loutre', 'Renard', 'Lièvre', 'Cerf', 'Marmotte'].map(id); S.deck = S.deck.filter(x => !S.market.includes(x));
+  UI.overlay = null; render({ animate: false }); tag(S.players[0]); Scene.focus(0, { dur: 800, keepAngle: false }); await W(850);
+
+  // 2. le duel
+  // avance d'une île de plusieurs tours (appliqué au moment où la caméra y arrive)
+  const pending = {};
+  const advance = pi => {
+    const adv = pending[pi]; if (!adv) return false; delete pending[pi];
+    const p = S.players[pi];
+    for (const [k, col] of adv.moves) if (H.canPlace(p.board[k], col)) p.board[k].stack.push(col);
+    for (const n of adv.cards) {
+      const cid = id(n); if (p.cards.length >= 4) continue; S.market = S.market.filter(x => x !== cid); S.deck = S.deck.filter(x => x !== cid);
+      p.cards.push({ id: cid, placed: 0 }); const cur0 = S.current; S.current = pi; const tg = H.cardTargets(p.board, cid); if (tg.length) H.placeCube(S, p.cards.length - 1, tg[0]); S.current = cur0;
+    }
+    p.turns += adv.turns; while (S.market.length < 5 && S.deck.length) S.market.push(S.deck.shift());
+    caption(adv.label); return true;
+  };
+  // même passage d'une île à l'autre qu'entre deux tours
+  const goTo = async (pi, hold = 0) => {
+    S.current = pi; S.tookSlot = false; S.tookCard = false; S.hand = []; UI.viewIdx = pi; UI.cubeCard = null;
+    const adv = advance(pi); render({ animate: adv }); tag(S.players[pi]); Scene.focus(pi, { dur: 1050, keepAngle: false }); Sound.whoosh(); await W(1150 + hold);
+    if (adv) caption(null);
+  };
+  const playTurn = async step => {
+    if (S.current !== step.p || pending[step.p]) await goTo(step.p, pending[step.p] ? 200 : 0);
+    cur.style.opacity = '1';
+    S.slots[2] = step.m.map(m => m[1]);
+    await at('.nest[data-i="2"]', 300); takeSlot(2); await W(150);
+    for (const [k] of step.m) { UI.sel = 0; render(); await cell(step.p, k); placeToken(k); await W(120); }
+    if (step.card) {
+      const mi = S.market.indexOf(id(step.card));
+      if (mi >= 0) { await at(`[data-act="take"][data-i="${mi}"]`, 300); takeCard(mi); await W(320); }
+      const p = me(), ci = p.cards.findIndex(c => c.id === id(step.card)), tg = ci >= 0 ? H.cardTargets(p.board, p.cards[ci].id) : [];
+      if (tg.length) {
+        UI.cubeCard = ci; render(); await cell(step.p, tg[0], 280); placeCube(tg[0]);
+        cur.style.opacity = '0'; Scene.zoomTo(step.p, tg[0], { dur: 400 }); await W(820); Scene.focus(step.p, { dur: 340 }); await W(360); cur.style.opacity = '1';
+      }
+    }
+    document.querySelectorAll('.toast').forEach(e => e.remove());
+    me().turns++; for (let i = 0; i < 5; i++) if (!S.slots[i].length) S.slots[i] = S.bag.splice(0, 3); while (S.market.length < 5 && S.deck.length) S.market.push(S.deck.shift());
+  };
+  const later = n => lang === 'en' ? `${n} turns later…` : `${n} tours plus tard…`;
+
+  // manche 1
+  await playTurn({ p: 0, m: [['0,1', 'blue'], ['1,1', 'blue'], ['0,0', 'green']], card: 'Loutre' });
+  await playTurn({ p: 1, m: [['0,3', 'brown'], ['0,3', 'red'], ['1,3', 'green']], card: 'Renard' });
+  // quatre tours plus tard
+  pending[0] = { label: later(4), turns: 4, cards: ['Bouquetin', 'Castor'], moves: [['3,-1', 'gray'], ['3,-1', 'gray'], ['4,-1', 'gray'], ['2,1', 'blue'], ['2,2', 'blue'], ['3,2', 'blue'], ['4,-2', 'gray'], ['4,-2', 'gray'], ['4,-2', 'gray'], ['3,0', 'brown'], ['3,0', 'green'], ['2,0', 'green']] };
+  pending[1] = { label: later(4), turns: 4, cards: ['Mulot'], moves: [['4,0', 'brown'], ['4,0', 'green'], ['4,1', 'yellow'], ['2,-1', 'brown'], ['2,-1', 'brown'], ['2,-1', 'green'], ['0,1', 'blue'], ['1,1', 'blue'], ['0,2', 'yellow'], ['3,-1', 'gray'], ['3,-1', 'gray'], ['4,-1', 'gray']] };
+  // manche 2
+  await playTurn({ p: 0, m: [['4,0', 'yellow'], ['4,1', 'yellow'], ['1,3', 'green']], card: 'Lièvre' });
+  await playTurn({ p: 1, m: [['3,1', 'yellow'], ['1,2', 'brown'], ['1,2', 'green']], card: 'Cerf' });
+  // trois tours plus tard : les deux îles presque terminées
+  pending[0] = { label: later(3), turns: 3, cards: [], moves: [['0,3', 'yellow'], ['0,4', 'yellow'], ['1,2', 'brown'], ['1,2', 'green'], ['1,0', 'brown'], ['1,0', 'green'], ['2,3', 'brown'], ['2,3', 'red'], ['4,2', 'gray']] };
+  pending[1] = { label: later(3), turns: 3, cards: ['Hérisson'], moves: [['2,1', 'blue'], ['2,2', 'blue'], ['2,0', 'green'], ['0,4', 'yellow'], ['1,0', 'brown'], ['1,0', 'green'], ['2,3', 'brown'], ['2,3', 'red'], ['3,2', 'blue']] };
+  cur.style.opacity = '0';
+  await goTo(0, 400); await goTo(1, 400);
+  Scene.overview(1000); await W(1050);
+
+  // 3. les deux îles, puis le message de fin
+  cur.style.opacity = '0'; tagEl.remove(); capEl.remove(); hud.style.transition = 'opacity .6s'; hud.style.opacity = '0';
+  Scene.autoRotate(true); await W(600);
+  window.__outroT = performance.now(); // la vidéo insère ici le segment téléphone
+  const outro = document.createElement('div'); outro.className = 'demo-outro'; document.body.appendChild(outro);
+  const lines = DEMO_TXT[lang].slice(/phone/.test(location.search) ? 1 : 0);
+  for (const [line, sub] of lines) { const ms = 3800; outro.innerHTML = `<div class="demo-line" style="animation-duration:${ms}ms">${line}</div>${sub ? `<div class="demo-url" style="animation:dline ${ms}ms ease both">${sub}</div>` : ''}`; await W(ms); }
+  outro.innerHTML = '<div class="demo-line big">Verdance</div><div class="demo-url">mariusfaitducode.github.io/verdance</div>'; await W(2600);
+  window.__demoDone = true;
+}
+if (MODE.demo) runDemo();
+
 window.__H = { get S() { return S; }, UI, render, startGame, takeSlot, placeToken, takeCard, placeCube, endTurn, syncScene };
 })();
