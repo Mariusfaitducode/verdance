@@ -1,0 +1,19 @@
+// Verdance mobile : Worker + Durable Object `Room`.
+// Local : npx wrangler@4 dev   (clés VAPID dans .dev.vars)
+// Prod  : npx wrangler@4 deploy (clés VAPID posées avec `wrangler secret put`)
+{
+  "name": "verdance",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "ROOM", "class_name": "Room" }, { "name": "LOBBY", "class_name": "Lobby" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }, { "tag": "v2", "new_sqlite_classes": ["Lobby"] }],
+  "observability": { "enabled": true }
+}

@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Verdance",
+    "slug": "verdance",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.mariusfaitducode.verdance",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1f6fa6",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.mariusfaitducode.verdance"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-status-bar"
+    ],
+    "backgroundColor": "#1f6fa6",
+    "extra": {
+      "eas": {
+        "projectId": "79ba59fd-7d8f-4b63-ad8f-fa704ced13c7"
+      }
+    },
+    "owner": "mariuscode"
+  }
+}

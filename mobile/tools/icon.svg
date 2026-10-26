@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a9ad8"/><stop offset="1" stop-color="#1d6aa3"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sea)"/>
+  <!-- anneau d'eau peu profonde -->
+  <polygon points="256,96 410,180 410,348 256,432 102,348 102,180" fill="#6fd0e8" opacity=".55"/>
+  <!-- île : hexagone vu de 3/4 -->
+  <polygon points="256,150 376,212 376,330 256,392 136,330 136,212" fill="#8a5a33"/>
+  <polygon points="256,130 376,192 376,300 256,362 136,300 136,192" fill="#6cc04a"/>
+  <polygon points="256,130 376,192 256,254 136,192" fill="#86d35c"/>
+  <!-- rivière -->
+  <path d="M150 236 C 200 250, 210 290, 262 300 S 340 296, 370 270" stroke="#3f9ad6" stroke-width="22" fill="none" stroke-linecap="round"/>
+  <!-- montagne -->
+  <polygon points="258,92 326,214 190,214" fill="#a9b2bd"/>
+  <polygon points="258,92 326,214 262,214" fill="#7f8893"/>
+  <polygon points="258,92 284,140 268,134 254,146 240,132" fill="#ffffff"/>
+  <!-- sapins -->
+  <polygon points="176,190 204,250 148,250" fill="#3f8a2c"/><polygon points="176,190 204,250 178,250" fill="#2f6f22"/>
+  <polygon points="334,212 360,268 308,268" fill="#3f8a2c"/><polygon points="334,212 360,268 336,268" fill="#2f6f22"/>
+  <!-- maison -->
+  <rect x="228" y="300" width="44" height="32" fill="#f6e3c8"/><polygon points="220,302 250,276 280,302" fill="#df5639"/>
+</svg>

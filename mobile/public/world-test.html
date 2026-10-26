@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Verdance — banc du monde 3D</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1d5aa6; font: 13px/1.3 system-ui, sans-serif; color: #fff; }
+  #stage { position: fixed; inset: 0; }
+  #top { position: fixed; left: 0; right: 0; top: 0; height: 64px; display: flex; align-items: center; gap: 6px; padding: 0 10px;
+    background: linear-gradient(#0d2a4ccc, #0d2a4c00); pointer-events: none; }
+  #top b { font-size: 15px; } #top .sp { flex: 1; }
+  #tray { position: fixed; left: 0; right: 0; bottom: 0; height: 40%; background: #f6efe1f2; color: #2b2820; border-radius: 18px 18px 0 0;
+    box-shadow: 0 -6px 20px #0003; padding: 12px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; }
+  #tray button { font: inherit; padding: 9px 12px; border-radius: 10px; border: 0; background: #2f6f62; color: #fff; }
+  #tray button.alt { background: #c0573f; }
+  #log { width: 100%; font: 12px ui-monospace, monospace; color: #5f5646; white-space: pre-wrap; }
+  body.noinsets #top, body.noinsets #tray { opacity: .25; }
+  body.shot #tray, body.shot #top { display: none; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="top"><b id="who">Île d'Alice</b><span class="sp"></span><span id="fps">– i/s</span></div>
+<div id="tray">
+  <button data-a="f0">Île 0</button><button data-a="f1">Île 1</button>
+  <button data-a="legal">Cases légales</button><button data-a="targets" class="alt">Cibles animal</button>
+  <button data-a="none">Rien</button><button data-a="place">Poser un jeton</button>
+  <button data-a="insets">Insets on/off</button><button data-a="over">Vue d'ensemble</button>
+  <div id="log"></div>
+</div>
+<script src="rules.js"></script>
+<script src="world.js"></script>
+<script>
+// État de partie plausible : deux îles bien remplies (rivière, chaîne de montagnes, forêt, champs, hameau, animaux)
+const S = H.newState(['Alice', 'Bob'], { spirits: true });
+const key = (c, r) => H.BOARD_CELLS.find(x => x.col === c && x.row === r).k;
+const card = n => H.CARDS.findIndex(c => c.name === n);
+function fill(board, spec) { for (const [c, r, stack, animal] of spec) { const k = key(c, r); board[k].stack = stack.slice(); if (animal) board[k].cube = { card: card(animal), color: 'x' }; } }
+const W = ['blue'], F = ['yellow'], M1 = ['gray'], M2 = ['gray', 'gray'], M3 = ['gray', 'gray', 'gray'];
+const T1 = ['green'], T2 = ['brown', 'green'], T3 = ['brown', 'brown', 'green'], B = ['brown', 'red'], Bg = ['gray', 'red'], Br = ['red', 'red'], CL = ['brown'], FD = ['red'];
+fill(S.players[0].board, [
+  [0, 0, M3, 'Aigle'], [1, 0, M2, 'Bouquetin'], [2, 0, M3], [0, 1, M2], [2, 1, M1],         // chaîne de montagnes au nord
+  [4, 0, W], [4, 1, W, 'Canard'], [3, 1, W], [3, 2, W], [2, 3, W],                          // rivière vers le sud
+  [0, 2, T3, 'Cerf'], [0, 3, T2], [1, 2, T3], [1, 3, T2, 'Ours'], [0, 4, T1],                 // forêt à l'ouest
+  [3, 3, F], [4, 3, F, 'Lapin'], [4, 4, F],                                                  // champs
+  [2, 4, B, 'Renard'], [4, 2, Bg], [1, 1, CL],                                               // hameau + clairière
+]);
+fill(S.players[1].board, [
+  [3, 0, M3], [4, 0, M2, 'Chamois'], [4, 1, M1], [2, 0, M2],
+  [0, 0, W], [0, 1, W, 'Héron'], [1, 1, W], [1, 2, W], [0, 3, W],
+  [2, 2, T3, 'Chouette'], [2, 3, T2], [3, 2, T2], [3, 3, T1], [1, 3, T3, 'Loup'],
+  [0, 2, F, 'Lapin'], [1, 0, F], [0, 4, F],
+  [2, 1, B], [3, 1, B, 'Hirondelle'], [4, 2, Br], [4, 4, FD],
+]);
+let viewIdx = 0, mode = 'legal', withInsets = true;
+const log = m => { document.getElementById('log').textContent = m; };
+function legalFor(pi, col) { return H.BOARD_CELLS.map(c => c.k).filter(k => H.canPlace(S.players[pi].board[k], col)); }
+function sync(animate = true) {
+  const v = { activeIdx: viewIdx, legal: [], targets: [], patternHi: [], ghostColor: null, animate };
+  if (mode === 'legal') v.legal = legalFor(viewIdx, 'green');
+  if (mode === 'targets') { const id = card(viewIdx ? 'Écureuil' : 'Sanglier'); v.targets = H.cardTargets(S.players[viewIdx].board, id); if (v.targets[0]) v.patternHi = H.patternCellsAt(S.players[viewIdx].board, id, v.targets[0]); }
+  Scene.sync(S, v);
+}
+function applyInsets() {
+  const top = withInsets ? 64 : 0, bottom = withInsets ? Math.round(innerHeight * .4) : 0;
+  Scene.setInsets({ top, bottom }); document.body.classList.toggle('noinsets', !withInsets);
+}
+const params = new URLSearchParams(location.search);
+if (params.has('shot')) document.body.classList.add('shot');
+Scene.init(document.getElementById('stage'), {
+  onReady() { applyInsets(); sync(false); Scene.focus(+params.get('island') || 0, { instant: true }); viewIdx = +params.get('island') || 0; sync(false); window.READY = true; },
+  onError(e) { log('Erreur : ' + e); },
+  onCellClick(pi, k) { log('toucher : île ' + pi + ', case ' + k); window.LAST_CLICK = [pi, k];
+    if (pi === viewIdx && mode === 'legal' && legalFor(pi, 'green').includes(k)) { S.players[pi].board[k].stack.push('green'); sync(true); Scene.celebrate(pi, k); } },
+});
+addEventListener('resize', applyInsets);
+document.getElementById('tray').addEventListener('click', e => {
+  const a = e.target.dataset && e.target.dataset.a; if (!a) return;
+  if (a === 'f0' || a === 'f1') { viewIdx = +a[1]; document.getElementById('who').textContent = 'Île de ' + S.players[viewIdx].name; Scene.focus(viewIdx); sync(); }
+  else if (a === 'legal' || a === 'targets' || a === 'none') { mode = a; sync(); }
+  else if (a === 'place') { const ks = legalFor(viewIdx, 'gray'); const k = ks[Math.random() * ks.length | 0]; if (k) { S.players[viewIdx].board[k].stack.push('gray'); sync(true); log('montagne posée en ' + k); } }
+  else if (a === 'insets') { withInsets = !withInsets; applyInsets(); Scene.focus(viewIdx, { instant: true }); }
+  else if (a === 'over') Scene.overview();
+});
+// compteur d'images
+let fr = 0, t0 = performance.now();
+(function tick() { fr++; const t = performance.now(); if (t - t0 > 1000) { document.getElementById('fps').textContent = Math.round(fr * 1000 / (t - t0)) + ' i/s'; window.FPS = fr * 1000 / (t - t0); fr = 0; t0 = t; } requestAnimationFrame(tick); })();
+window.T = { S, sync, setMode: m => { mode = m; sync(false); }, focus: i => { viewIdx = i; Scene.focus(i, { instant: true }); sync(false); } };
+</script>
+</body>
+</html>
