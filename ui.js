@@ -7,7 +7,7 @@ if (MODE.embed || MODE.demo) document.documentElement.classList.add(MODE.embed ?
 const SQ3 = Math.sqrt(3);
 const hud = document.getElementById('hud');
 let S = null, history = [];
-const UI = { spirits: true, sel: 0, cubeCard: null, viewIdx: 0, overlay: null, toast: null, hoverK: null, hoverCard: null, handIds: [], names: ['Alice', 'Bob'], rules: false };
+const UI = { spirits: true, sel: 0, cubeCard: null, viewIdx: 0, overlay: null, toast: null, hoverK: null, hoverCard: null, handIds: [], names: ['', ''], rules: false };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
 UI.spirits = store.get('verdance-spirits', true);
@@ -303,7 +303,7 @@ function introHtml() {
   return topHtml(true) + `<div class="intro"><div class="intro-card">
     <h1 class="display">Verdance<em>un paysage, jeton après jeton</em></h1>
     <p class="lead">Faites pousser des forêts, élevez des montagnes, tracez des rivières. Puis invitez les animaux qui ne vivent que dans ces habitats-là.</p>
-    <div class="pl-list">${UI.names.map((n, i) => `<div class="pl" style="--pc:${H.PLAYER_COLORS[i]}"><span class="av"></span><input value="${esc(n)}" maxlength="16" data-name="${i}" aria-label="Joueur ${i + 1}">${UI.names.length > 1 ? `<button data-act="rmp" data-i="${i}" title="Retirer">${icon('x')}</button>` : ''}</div>`).join('')}</div>
+    <div class="pl-list">${UI.names.map((n, i) => `<div class="pl" style="--pc:${H.PLAYER_COLORS[i]}"><span class="av"></span><input value="${esc(n)}" placeholder="Joueur ${i + 1}" maxlength="16" data-name="${i}" aria-label="Joueur ${i + 1}">${UI.names.length > 1 ? `<button data-act="rmp" data-i="${i}" title="Retirer">${icon('x')}</button>` : ''}</div>`).join('')}</div>
     ${UI.names.length < 4 ? '<button class="linkbtn" data-act="addp">+ Ajouter un joueur</button>' : ''}
     <button class="opt ${UI.spirits ? 'on' : ''}" data-act="togglespirits"><span class="tick"></span><span><b>Esprits du paysage</b><small>un objectif secret par joueur, choisi parmi deux</small></span></button>
     <div class="row" style="margin-top:22px"><button class="btn" data-act="start" style="padding:14px 24px;font-size:1.02rem">Commencer la partie</button>
@@ -398,7 +398,7 @@ document.addEventListener('click', e => {
   switch (act) {
     case 'start': readNames(); startGame(UI.names.map((n, j) => n.trim() || 'Joueur ' + (j + 1))); break;
     case 'resume': { const d = store.get(SAVE_KEY, null); if (d && d.S) { S = d.S; history = d.history || []; UI.handIds = []; if (Scene.ready) { Scene.reset(); Scene.autoRotate(false); } showTurn(); } break; }
-    case 'addp': readNames(); if (UI.names.length < 4) UI.names.push('Joueur ' + (UI.names.length + 1)); render(); break;
+    case 'addp': readNames(); if (UI.names.length < 4) UI.names.push(''); render(); break;
     case 'rmp': readNames(); UI.names.splice(i, 1); render(); break;
     case 'rules': UI.rules = true; render({ animate: false }); break;
     case 'closerules': UI.rules = false; render({ animate: false }); break;
